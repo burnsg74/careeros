@@ -10,4 +10,5 @@ export type JobSummary = {
 export type JobDetail = JobSummary & {
   properties: Record<string, string>
   body: string
+  obsidianUrl: string
 }

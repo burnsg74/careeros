@@ -1,9 +1,17 @@
 import cors from 'cors'
 import express from 'express'
 import { resolveDataDir } from './lib/dataDir.js'
-import { getContact, listContacts } from './lib/contacts.js'
-import { getJobBoard, listJobBoards } from './lib/jobBoards.js'
-import { getJob, listJobs } from './lib/jobs.js'
+import { getContact, listContacts, updateContactBody } from './lib/contacts.js'
+import { getJobBoard, listJobBoards, updateJobBoardBody } from './lib/jobBoards.js'
+import { getJob, listJobs, updateJobBody } from './lib/jobs.js'
+
+function readBody(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+  const body = (value as { body?: unknown }).body
+  return typeof body === 'string' ? body : null
+}
 
 export const app = express()
 
@@ -36,6 +44,20 @@ app.get('/api/jobs/:id', async (req, res) => {
   res.json(result.value)
 })
 
+app.put('/api/jobs/:id', async (req, res) => {
+  const body = readBody(req.body)
+  if (body === null) {
+    res.status(400).json({ error: 'body is required' })
+    return
+  }
+  const result = await updateJobBody(req.params.id, body)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
 app.get('/api/contacts', async (_req, res) => {
   const result = await listContacts()
   if (!result.ok) {
@@ -54,6 +76,20 @@ app.get('/api/contacts/:id', async (req, res) => {
   res.json(result.value)
 })
 
+app.put('/api/contacts/:id', async (req, res) => {
+  const body = readBody(req.body)
+  if (body === null) {
+    res.status(400).json({ error: 'body is required' })
+    return
+  }
+  const result = await updateContactBody(req.params.id, body)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
 app.get('/api/job-boards', async (_req, res) => {
   const result = await listJobBoards()
   if (!result.ok) {
@@ -65,6 +101,20 @@ app.get('/api/job-boards', async (_req, res) => {
 
 app.get('/api/job-boards/:id', async (req, res) => {
   const result = await getJobBoard(req.params.id)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.put('/api/job-boards/:id', async (req, res) => {
+  const body = readBody(req.body)
+  if (body === null) {
+    res.status(400).json({ error: 'body is required' })
+    return
+  }
+  const result = await updateJobBoardBody(req.params.id, body)
   if (!result.ok) {
     res.status(result.status).json({ error: result.error })
     return

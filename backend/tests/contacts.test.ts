@@ -47,6 +47,9 @@ describe('GET /api/contacts/:id', () => {
     expect(response.body.name).toBe('Aaron Thomson')
     expect(response.body.properties.name).toBe('Aaron Thomson')
     expect(response.body.body).toContain('https://www.linkedin.com/in/aaron-thomson-33bb2521/')
+    expect(response.body.obsidianUrl).toBe(
+      `obsidian://open?vault=fixtures&file=${encodeURIComponent('1-Contacts/Aaron Thomson')}`,
+    )
   })
 
   it('returns 404 for an unknown contact', async () => {

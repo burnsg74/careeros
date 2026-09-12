@@ -54,6 +54,9 @@ describe('GET /api/jobs/:id', () => {
     expect(response.body.properties.source_id).toBe('1001')
     expect(response.body.properties.remote).toBe('true')
     expect(response.body.body).toContain('Ship the product.')
+    expect(response.body.obsidianUrl).toBe(
+      `obsidian://open?vault=fixtures&file=${encodeURIComponent('4-Jobs/Acme — Senior Engineer (1001)')}`,
+    )
   })
 
   it('returns 404 for an unknown job', async () => {

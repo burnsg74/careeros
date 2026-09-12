@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte'
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import JobBoards from './JobBoards.svelte'
 
@@ -20,10 +20,28 @@ const boards = [
 beforeEach(() => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo) => {
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
-      if (url === '/api/job-boards') {
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url === '/api/job-boards' && method === 'GET') {
         return { ok: true, status: 200, json: async () => boards }
+      }
+      if (url === '/api/job-boards/wellfound' && method === 'PUT') {
+        const parsed = JSON.parse(String(init?.body ?? '{}')) as { body: string }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ...boards[0],
+            properties: {
+              name: 'Wellfound',
+              url: 'https://wellfound.com',
+              rank: '1',
+            },
+            body: parsed.body,
+            obsidianUrl: 'obsidian://open?vault=CareerOS&file=2-Job%20Boards%2FWellfound',
+          }),
+        }
       }
       if (url === '/api/job-boards/wellfound') {
         return {
@@ -37,6 +55,7 @@ beforeEach(() => {
               rank: '1',
             },
             body: 'Best mix of **startup** hiring.',
+            obsidianUrl: 'obsidian://open?vault=CareerOS&file=2-Job%20Boards%2FWellfound',
           }),
         }
       }
@@ -71,4 +90,30 @@ test('renders job board detail content and properties', async () => {
   expect(screen.getAllByRole('link', { name: 'https://wellfound.com' }).length).toBeGreaterThan(0)
   expect(screen.getByRole('button', { name: 'Previous job board' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Next job board' })).toBeEnabled()
+  expect(screen.getByRole('link', { name: 'Open in Obsidian' })).toHaveAttribute(
+    'href',
+    'obsidian://open?vault=CareerOS&file=2-Job%20Boards%2FWellfound',
+  )
+})
+
+test('edits and saves job board markdown', async () => {
+  render(JobBoards, { props: { path: '/job-boards/wellfound' } })
+
+  expect(await screen.findByRole('heading', { name: 'Wellfound', level: 1 })).toBeInTheDocument()
+  await fireEvent.click(screen.getByRole('button', { name: 'Edit markdown' }))
+  await fireEvent.input(screen.getByRole('textbox', { name: 'Markdown' }), {
+    target: { value: 'Updated board **notes**.' },
+  })
+  await fireEvent.click(screen.getByRole('button', { name: 'Save markdown' }))
+
+  await waitFor(() => {
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+      '/api/job-boards/wellfound',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ body: 'Updated board **notes**.' }),
+      }),
+    )
+  })
+  expect(await screen.findByText(/Updated board/)).toBeInTheDocument()
 })

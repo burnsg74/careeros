@@ -1,7 +1,8 @@
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { resolveDataDir } from './dataDir.js'
-import { parseNote } from './parseNote.js'
+import { noteObsidianUrl } from './obsidian.js'
+import { parseNote, replaceNoteBody } from './parseNote.js'
 
 export type JobBoardSummary = {
   id: string
@@ -13,6 +14,7 @@ export type JobBoardSummary = {
 export type JobBoardDetail = JobBoardSummary & {
   properties: Record<string, string>
   body: string
+  obsidianUrl: string
 }
 
 type JobBoardsOk<T> = { ok: true; value: T }
@@ -101,7 +103,15 @@ export async function listJobBoards(): Promise<JobBoardsResult<JobBoardSummary[]
   return { ok: true, value: boards }
 }
 
-export async function getJobBoard(id: string): Promise<JobBoardsResult<JobBoardDetail>> {
+async function findJobBoard(id: string): Promise<
+  JobBoardsResult<{
+    dir: string
+    filename: string
+    summary: JobBoardSummary
+    properties: Record<string, string>
+    body: string
+  }>
+> {
   const dir = jobBoardsDir()
   if (!dir.ok) {
     return dir
@@ -124,7 +134,9 @@ export async function getJobBoard(id: string): Promise<JobBoardsResult<JobBoardD
       return {
         ok: true,
         value: {
-          ...summary,
+          dir: dir.value,
+          filename,
+          summary,
           properties: note.properties,
           body: note.body,
         },
@@ -133,4 +145,41 @@ export async function getJobBoard(id: string): Promise<JobBoardsResult<JobBoardD
   }
 
   return { ok: false, error: 'Job board not found', status: 404 }
+}
+
+export async function getJobBoard(id: string): Promise<JobBoardsResult<JobBoardDetail>> {
+  const found = await findJobBoard(id)
+  if (!found.ok) {
+    return found
+  }
+
+  return {
+    ok: true,
+    value: {
+      ...found.value.summary,
+      properties: found.value.properties,
+      body: found.value.body,
+      obsidianUrl: noteObsidianUrl('2-Job Boards', found.value.filename),
+    },
+  }
+}
+
+export async function updateJobBoardBody(
+  id: string,
+  body: string,
+): Promise<JobBoardsResult<JobBoardDetail>> {
+  const found = await findJobBoard(id)
+  if (!found.ok) {
+    return found
+  }
+
+  const path = join(found.value.dir, found.value.filename)
+  try {
+    const raw = await readFile(path, 'utf8')
+    await writeFile(path, replaceNoteBody(raw, body), 'utf8')
+  } catch {
+    return { ok: false, error: 'Could not save job board', status: 500 }
+  }
+
+  return getJobBoard(id)
 }

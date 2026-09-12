@@ -1,7 +1,8 @@
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { resolveDataDir } from './dataDir.js'
-import { parseNote } from './parseNote.js'
+import { noteObsidianUrl } from './obsidian.js'
+import { parseNote, replaceNoteBody } from './parseNote.js'
 
 export type ContactSummary = {
   id: string
@@ -12,6 +13,7 @@ export type ContactSummary = {
 export type ContactDetail = ContactSummary & {
   properties: Record<string, string>
   body: string
+  obsidianUrl: string
 }
 
 type ContactsOk<T> = { ok: true; value: T }
@@ -99,7 +101,15 @@ export async function listContacts(): Promise<ContactsResult<ContactSummary[]>> 
   return { ok: true, value: contacts }
 }
 
-export async function getContact(id: string): Promise<ContactsResult<ContactDetail>> {
+async function findContact(id: string): Promise<
+  ContactsResult<{
+    dir: string
+    filename: string
+    summary: ContactSummary
+    properties: Record<string, string>
+    body: string
+  }>
+> {
   const dir = contactsDir()
   if (!dir.ok) {
     return dir
@@ -122,7 +132,9 @@ export async function getContact(id: string): Promise<ContactsResult<ContactDeta
       return {
         ok: true,
         value: {
-          ...summary,
+          dir: dir.value,
+          filename,
+          summary,
           properties: note.properties,
           body: note.body,
         },
@@ -131,4 +143,41 @@ export async function getContact(id: string): Promise<ContactsResult<ContactDeta
   }
 
   return { ok: false, error: 'Contact not found', status: 404 }
+}
+
+export async function getContact(id: string): Promise<ContactsResult<ContactDetail>> {
+  const found = await findContact(id)
+  if (!found.ok) {
+    return found
+  }
+
+  return {
+    ok: true,
+    value: {
+      ...found.value.summary,
+      properties: found.value.properties,
+      body: found.value.body,
+      obsidianUrl: noteObsidianUrl('1-Contacts', found.value.filename),
+    },
+  }
+}
+
+export async function updateContactBody(
+  id: string,
+  body: string,
+): Promise<ContactsResult<ContactDetail>> {
+  const found = await findContact(id)
+  if (!found.ok) {
+    return found
+  }
+
+  const path = join(found.value.dir, found.value.filename)
+  try {
+    const raw = await readFile(path, 'utf8')
+    await writeFile(path, replaceNoteBody(raw, body), 'utf8')
+  } catch {
+    return { ok: false, error: 'Could not save contact', status: 500 }
+  }
+
+  return getContact(id)
 }

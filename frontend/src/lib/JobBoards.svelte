@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { marked } from 'marked'
+  import EditorControls from './EditorControls.svelte'
+  import MarkdownEditor from './MarkdownEditor.svelte'
   import type { JobBoardDetail, JobBoardSummary } from './jobBoards'
+  import { saveNoteBody } from './notes'
   import { jobBoardDetailPath, navigate, parseJobBoardId } from './router'
 
   let { path }: { path: string } = $props()
@@ -13,6 +16,10 @@
   let listLoading = $state(true)
   let detailLoading = $state(false)
   let lastBoardId = $state<string | null>(null)
+  let editing = $state(false)
+  let saving = $state(false)
+  let saveError = $state<string | null>(null)
+  let draft = $state('')
 
   const boardId = $derived(parseJobBoardId(path))
   const isDetail = $derived(boardId !== null)
@@ -33,8 +40,12 @@
       detail = null
       detailError = null
       detailLoading = false
+      editing = false
+      saveError = null
       return
     }
+    editing = false
+    saveError = null
     lastBoardId = id
     void loadDetail(id)
   })
@@ -114,6 +125,41 @@
   function isUrl(value: string): boolean {
     return value.startsWith('http://') || value.startsWith('https://')
   }
+
+  function startEdit() {
+    if (!detail) {
+      return
+    }
+    draft = detail.body
+    editing = true
+    saveError = null
+  }
+
+  function cancelEdit() {
+    editing = false
+    saveError = null
+    draft = detail?.body ?? ''
+  }
+
+  async function saveEdit() {
+    if (!boardId) {
+      return
+    }
+    saving = true
+    saveError = null
+    try {
+      detail = await saveNoteBody<JobBoardDetail>(
+        `/api/job-boards/${encodeURIComponent(boardId)}`,
+        draft,
+      )
+      editing = false
+      void loadList()
+    } catch {
+      saveError = 'Could not save job board'
+    } finally {
+      saving = false
+    }
+  }
 </script>
 
 <div class="page">
@@ -161,6 +207,17 @@
         </svg>
       </button>
     </div>
+    <div class="toolbar-end">
+      {#if isDetail && detail && !detailLoading && !detailError}
+        <EditorControls
+          {editing}
+          {saving}
+          obsidianUrl={detail.obsidianUrl}
+          onedit={startEdit}
+          oncancel={cancelEdit}
+          onsave={() => void saveEdit()}
+        />
+      {/if}
     {#if isDetail}
       <div class="nav-boards" role="group" aria-label="Job board navigation">
         <button
@@ -201,6 +258,7 @@
         </button>
       </div>
     {/if}
+    </div>
   </header>
 
   {#if !isDetail}
@@ -260,7 +318,14 @@
             <a href={detail.url} target="_blank" rel="noreferrer">{detail.url}</a>
           </p>
         {/if}
-        {@html marked.parse(detail.body, { async: false })}
+        {#if saveError}
+          <p class="save-error">{saveError}</p>
+        {/if}
+        {#if editing}
+          <MarkdownEditor bind:draft onsave={() => void saveEdit()} />
+        {:else}
+          {@html marked.parse(detail.body, { async: false })}
+        {/if}
       </article>
       <aside class="properties">
         <h2>Properties</h2>
@@ -305,9 +370,15 @@
   }
 
   .views,
-  .nav-boards {
+  .nav-boards,
+  .toolbar-end {
     display: flex;
+    align-items: center;
     gap: 4px;
+  }
+
+  .toolbar-end {
+    gap: 12px;
   }
 
   .icon-btn {
@@ -430,6 +501,11 @@
   .subtitle {
     margin: 0 0 24px;
     color: var(--text);
+  }
+
+  .save-error {
+    color: #b91c1c;
+    margin: 0 0 16px;
   }
 
   .content :global(h2),

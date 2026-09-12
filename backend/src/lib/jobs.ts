@@ -1,7 +1,8 @@
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { resolveDataDir } from './dataDir.js'
-import { parseNote } from './parseNote.js'
+import { noteObsidianUrl } from './obsidian.js'
+import { parseNote, replaceNoteBody } from './parseNote.js'
 
 export type JobSummary = {
   id: string
@@ -15,6 +16,7 @@ export type JobSummary = {
 export type JobDetail = JobSummary & {
   properties: Record<string, string>
   body: string
+  obsidianUrl: string
 }
 
 type JobsOk<T> = { ok: true; value: T }
@@ -95,7 +97,15 @@ export async function listJobs(): Promise<JobsResult<JobSummary[]>> {
   return { ok: true, value: jobs }
 }
 
-export async function getJob(id: string): Promise<JobsResult<JobDetail>> {
+async function findJob(id: string): Promise<
+  JobsResult<{
+    dir: string
+    filename: string
+    summary: JobSummary
+    properties: Record<string, string>
+    body: string
+  }>
+> {
   const dir = jobsDir()
   if (!dir.ok) {
     return dir
@@ -118,7 +128,9 @@ export async function getJob(id: string): Promise<JobsResult<JobDetail>> {
       return {
         ok: true,
         value: {
-          ...summary,
+          dir: dir.value,
+          filename,
+          summary,
           properties: note.properties,
           body: note.body,
         },
@@ -127,4 +139,38 @@ export async function getJob(id: string): Promise<JobsResult<JobDetail>> {
   }
 
   return { ok: false, error: 'Job not found', status: 404 }
+}
+
+export async function getJob(id: string): Promise<JobsResult<JobDetail>> {
+  const found = await findJob(id)
+  if (!found.ok) {
+    return found
+  }
+
+  return {
+    ok: true,
+    value: {
+      ...found.value.summary,
+      properties: found.value.properties,
+      body: found.value.body,
+      obsidianUrl: noteObsidianUrl('4-Jobs', found.value.filename),
+    },
+  }
+}
+
+export async function updateJobBody(id: string, body: string): Promise<JobsResult<JobDetail>> {
+  const found = await findJob(id)
+  if (!found.ok) {
+    return found
+  }
+
+  const path = join(found.value.dir, found.value.filename)
+  try {
+    const raw = await readFile(path, 'utf8')
+    await writeFile(path, replaceNoteBody(raw, body), 'utf8')
+  } catch {
+    return { ok: false, error: 'Could not save job', status: 500 }
+  }
+
+  return getJob(id)
 }

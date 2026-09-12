@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { marked } from 'marked'
+  import EditorControls from './EditorControls.svelte'
+  import MarkdownEditor from './MarkdownEditor.svelte'
   import type { ContactDetail, ContactSummary } from './contacts'
+  import { saveNoteBody } from './notes'
   import { contactDetailPath, navigate, parseContactId } from './router'
 
   let { path }: { path: string } = $props()
@@ -13,6 +16,10 @@
   let listLoading = $state(true)
   let detailLoading = $state(false)
   let lastContactId = $state<string | null>(null)
+  let editing = $state(false)
+  let saving = $state(false)
+  let saveError = $state<string | null>(null)
+  let draft = $state('')
 
   const contactId = $derived(parseContactId(path))
   const isDetail = $derived(contactId !== null)
@@ -33,8 +40,12 @@
       detail = null
       detailError = null
       detailLoading = false
+      editing = false
+      saveError = null
       return
     }
+    editing = false
+    saveError = null
     lastContactId = id
     void loadDetail(id)
   })
@@ -114,6 +125,41 @@
   function isUrl(value: string): boolean {
     return value.startsWith('http://') || value.startsWith('https://')
   }
+
+  function startEdit() {
+    if (!detail) {
+      return
+    }
+    draft = detail.body
+    editing = true
+    saveError = null
+  }
+
+  function cancelEdit() {
+    editing = false
+    saveError = null
+    draft = detail?.body ?? ''
+  }
+
+  async function saveEdit() {
+    if (!contactId) {
+      return
+    }
+    saving = true
+    saveError = null
+    try {
+      detail = await saveNoteBody<ContactDetail>(
+        `/api/contacts/${encodeURIComponent(contactId)}`,
+        draft,
+      )
+      editing = false
+      void loadList()
+    } catch {
+      saveError = 'Could not save contact'
+    } finally {
+      saving = false
+    }
+  }
 </script>
 
 <div class="page">
@@ -161,6 +207,17 @@
         </svg>
       </button>
     </div>
+    <div class="toolbar-end">
+      {#if isDetail && detail && !detailLoading && !detailError}
+        <EditorControls
+          {editing}
+          {saving}
+          obsidianUrl={detail.obsidianUrl}
+          onedit={startEdit}
+          oncancel={cancelEdit}
+          onsave={() => void saveEdit()}
+        />
+      {/if}
     {#if isDetail}
       <div class="nav-contacts" role="group" aria-label="Contact navigation">
         <button
@@ -201,6 +258,7 @@
         </button>
       </div>
     {/if}
+    </div>
   </header>
 
   {#if !isDetail}
@@ -258,7 +316,14 @@
             <a href={detail.url} target="_blank" rel="noreferrer">{detail.url}</a>
           </p>
         {/if}
-        {@html marked.parse(detail.body, { async: false })}
+        {#if saveError}
+          <p class="save-error">{saveError}</p>
+        {/if}
+        {#if editing}
+          <MarkdownEditor bind:draft onsave={() => void saveEdit()} />
+        {:else}
+          {@html marked.parse(detail.body, { async: false })}
+        {/if}
       </article>
       <aside class="properties">
         <h2>Properties</h2>
@@ -303,9 +368,15 @@
   }
 
   .views,
-  .nav-contacts {
+  .nav-contacts,
+  .toolbar-end {
     display: flex;
+    align-items: center;
     gap: 4px;
+  }
+
+  .toolbar-end {
+    gap: 12px;
   }
 
   .icon-btn {
@@ -423,6 +494,11 @@
   .subtitle {
     margin: 0 0 24px;
     color: var(--text);
+  }
+
+  .save-error {
+    color: #b91c1c;
+    margin: 0 0 16px;
   }
 
   .content :global(h2),

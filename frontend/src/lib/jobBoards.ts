@@ -8,4 +8,5 @@ export type JobBoardSummary = {
 export type JobBoardDetail = JobBoardSummary & {
   properties: Record<string, string>
   body: string
+  obsidianUrl: string
 }

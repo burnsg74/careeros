@@ -18,7 +18,21 @@ export function parseNote(raw: string): {
     }
   }
 
-  return { properties, body: (match[2] ?? '').replace(/^\r?\n/, '') }
+  return { properties, body: (match[2] ?? '').replace(/^\r?\n/, '').replace(/\n+$/, '') }
+}
+
+export function replaceNoteBody(raw: string, body: string): string {
+  const normalized = body.replace(/\r\n/g, '\n').replace(/\n+$/, '')
+  const match = raw.replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
+  if (!match) {
+    return normalized ? `${normalized}\n` : ''
+  }
+
+  const frontmatter = match[1] ?? ''
+  if (!normalized) {
+    return `---\n${frontmatter}\n---\n`
+  }
+  return `---\n${frontmatter}\n---\n\n${normalized}\n`
 }
 
 function stringifyProperty(value: unknown): string {

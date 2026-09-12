@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte'
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Contacts from './Contacts.svelte'
 
@@ -18,10 +18,27 @@ const contacts = [
 beforeEach(() => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo) => {
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
-      if (url === '/api/contacts') {
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url === '/api/contacts' && method === 'GET') {
         return { ok: true, status: 200, json: async () => contacts }
+      }
+      if (url === '/api/contacts/aaron-thomson' && method === 'PUT') {
+        const parsed = JSON.parse(String(init?.body ?? '{}')) as { body: string }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ...contacts[0],
+            properties: {
+              name: 'Aaron Thomson',
+              note_type: 'Contact',
+            },
+            body: parsed.body,
+            obsidianUrl: 'obsidian://open?vault=CareerOS&file=1-Contacts%2FAaron%20Thomson',
+          }),
+        }
       }
       if (url === '/api/contacts/aaron-thomson') {
         return {
@@ -34,6 +51,7 @@ beforeEach(() => {
               note_type: 'Contact',
             },
             body: 'Best mix of **startup** hiring notes.',
+            obsidianUrl: 'obsidian://open?vault=CareerOS&file=1-Contacts%2FAaron%20Thomson',
           }),
         }
       }
@@ -69,4 +87,30 @@ test('renders contact detail content and properties', async () => {
   ).toBeGreaterThan(0)
   expect(screen.getByRole('button', { name: 'Previous contact' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Next contact' })).toBeEnabled()
+  expect(screen.getByRole('link', { name: 'Open in Obsidian' })).toHaveAttribute(
+    'href',
+    'obsidian://open?vault=CareerOS&file=1-Contacts%2FAaron%20Thomson',
+  )
+})
+
+test('edits and saves contact markdown', async () => {
+  render(Contacts, { props: { path: '/contacts/aaron-thomson' } })
+
+  expect(await screen.findByRole('heading', { name: 'Aaron Thomson', level: 1 })).toBeInTheDocument()
+  await fireEvent.click(screen.getByRole('button', { name: 'Edit markdown' }))
+  await fireEvent.input(screen.getByRole('textbox', { name: 'Markdown' }), {
+    target: { value: 'Worked together at **Acme**.' },
+  })
+  await fireEvent.click(screen.getByRole('button', { name: 'Save markdown' }))
+
+  await waitFor(() => {
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+      '/api/contacts/aaron-thomson',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ body: 'Worked together at **Acme**.' }),
+      }),
+    )
+  })
+  expect(await screen.findByText(/Worked together at/)).toBeInTheDocument()
 })

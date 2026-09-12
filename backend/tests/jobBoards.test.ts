@@ -49,6 +49,9 @@ describe('GET /api/job-boards/:id', () => {
     expect(response.body.name).toBe('Wellfound')
     expect(response.body.properties.rank).toBe('1')
     expect(response.body.body).toContain('Best mix of startup hiring.')
+    expect(response.body.obsidianUrl).toBe(
+      `obsidian://open?vault=fixtures&file=${encodeURIComponent('2-Job Boards/1 - Wellfound')}`,
+    )
   })
 
   it('returns 404 for an unknown job board', async () => {
