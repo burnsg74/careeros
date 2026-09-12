@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, type Snippet } from 'svelte'
-  import { getPath, navigate, navItems } from './router'
+  import { getPath, isJobsPath, isNavActive, navigate, navItems } from './router'
 
   let { children }: { children: Snippet } = $props()
   let path = $state(getPath())
@@ -30,7 +30,7 @@
         {#if item.enabled}
           <a
             href={item.path}
-            class:active={path === item.path}
+            class:active={isNavActive(item.path, path)}
             onclick={(event) => onNavClick(event, item.path, item.enabled)}
           >
             {item.title}
@@ -41,7 +41,7 @@
       {/each}
     </nav>
   </aside>
-  <main>
+  <main class:flush={isJobsPath(path)}>
     {@render children()}
   </main>
 </div>
@@ -97,5 +97,12 @@
 
   main {
     padding: 32px 40px;
+    min-width: 0;
+  }
+
+  main.flush {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
   }
 </style>

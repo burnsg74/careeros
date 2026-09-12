@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { resolveDataDir } from './lib/dataDir.js'
+import { getJob, listJobs } from './lib/jobs.js'
 
 export const app = express()
 
@@ -13,4 +14,22 @@ app.get('/api/health', (_req, res) => {
     ok: Boolean(dataDir && exists),
     dataDir,
   })
+})
+
+app.get('/api/jobs', async (_req, res) => {
+  const result = await listJobs()
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.get('/api/jobs/:id', async (req, res) => {
+  const result = await getJob(req.params.id)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
 })
