@@ -3,7 +3,8 @@
   import Layout from './lib/Layout.svelte'
   import Home from './lib/Home.svelte'
   import Jobs from './lib/Jobs.svelte'
-  import { getPath, isJobsPath } from './lib/router'
+  import JobBoards from './lib/JobBoards.svelte'
+  import { getPath, isJobBoardsPath, isJobsPath } from './lib/router'
 
   let path = $state(getPath())
 
@@ -19,6 +20,8 @@
 <Layout>
   {#if isJobsPath(path)}
     <Jobs {path} />
+  {:else if isJobBoardsPath(path)}
+    <JobBoards {path} />
   {:else}
     <Home />
   {/if}

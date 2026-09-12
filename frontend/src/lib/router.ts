@@ -8,7 +8,7 @@ export const navItems: NavItem[] = [
   { path: '/', title: 'Home', enabled: true },
   { path: '/jobs', title: 'Jobs', enabled: true },
   { path: '/contacts', title: 'Contacts', enabled: false },
-  { path: '/job-boards', title: 'Job Boards', enabled: false }
+  { path: '/job-boards', title: 'Job Boards', enabled: true }
 ]
 
 export function isNavActive(itemPath: string, path: string): boolean {
@@ -29,6 +29,19 @@ export function parseJobId(path: string): string | null {
 
 export function jobDetailPath(id: string): string {
   return `/jobs/${encodeURIComponent(id)}`
+}
+
+export function isJobBoardsPath(path: string): boolean {
+  return path === '/job-boards' || path.startsWith('/job-boards/')
+}
+
+export function parseJobBoardId(path: string): string | null {
+  const match = path.match(/^\/job-boards\/([^/]+)$/)
+  return match?.[1] ? decodeURIComponent(match[1]) : null
+}
+
+export function jobBoardDetailPath(id: string): string {
+  return `/job-boards/${encodeURIComponent(id)}`
 }
 
 export function getPath(location: Pick<Location, 'pathname'> = window.location): string {
