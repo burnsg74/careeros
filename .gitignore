@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+.env
+.env.*
+nginx/*.pem
+playwright/.cache/
+playwright/test-results/
+playwright/playwright-report/
+backend/tests/fixtures/.tmp/
