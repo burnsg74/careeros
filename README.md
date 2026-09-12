@@ -59,7 +59,12 @@ Playwright scrapers (browsers):
 
 ```bash
 cd playwright && npm install && npx playwright install
+npm run capture:wellfound
 ```
+
+`capture:wellfound` clones your last-used Chrome profile into `~/Library/Application Support/Google/Chrome-Remote` (Chrome will not attach CDP to the live profile), opens that copy over CDP, dumps listing/detail GraphQL+XHR JSON under `playwright/captures/` (gitignored), writes one Markdown note per new job into `~/Notebooks/CareerOS/4-Jobs` (skips IDs already present), then quits that Chrome and deletes the temp copy. Override the vault path with `WELLFOUND_JOBS_DIR`.
+
+Override the profile with `WELLFOUND_CHROME_PROFILE='Default'` (directory name from `chrome://version`, not the avatar label). To log in once in the debug Chrome and reuse it, run with `WELLFOUND_KEEP_USER_DATA_DIR=1`.
 
 ## URLs
 
