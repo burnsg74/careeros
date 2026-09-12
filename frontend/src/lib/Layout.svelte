@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, type Snippet } from 'svelte'
-  import { getPath, isJobBoardsPath, isJobsPath, isNavActive, navigate, navItems } from './router'
+  import { getPath, isContactsPath, isJobBoardsPath, isJobsPath, isNavActive, navigate, navItems } from './router'
 
   let { children }: { children: Snippet } = $props()
   let path = $state(getPath())
@@ -41,7 +41,7 @@
       {/each}
     </nav>
   </aside>
-  <main class:flush={isJobsPath(path) || isJobBoardsPath(path)}>
+  <main class:flush={isJobsPath(path) || isContactsPath(path) || isJobBoardsPath(path)}>
     {@render children()}
   </main>
 </div>

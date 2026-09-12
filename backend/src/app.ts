@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { resolveDataDir } from './lib/dataDir.js'
+import { getContact, listContacts } from './lib/contacts.js'
 import { getJobBoard, listJobBoards } from './lib/jobBoards.js'
 import { getJob, listJobs } from './lib/jobs.js'
 
@@ -28,6 +29,24 @@ app.get('/api/jobs', async (_req, res) => {
 
 app.get('/api/jobs/:id', async (req, res) => {
   const result = await getJob(req.params.id)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.get('/api/contacts', async (_req, res) => {
+  const result = await listContacts()
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.get('/api/contacts/:id', async (req, res) => {
+  const result = await getContact(req.params.id)
   if (!result.ok) {
     res.status(result.status).json({ error: result.error })
     return
