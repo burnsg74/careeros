@@ -77,6 +77,7 @@ type JobListing = {
   acceptedRemoteLocationNames?: string[] | null
   skills?: Tagged[] | null
   yearsExperienceMin?: number | null
+  liveStartAt?: number | string | null
   description?: string | null
   startup?: {
     name?: string | null
@@ -486,6 +487,21 @@ function existingJobIds(dir: string): Set<string> {
   return ids
 }
 
+function postedAtIso(value: unknown): string {
+  if (value == null || value === '') return ''
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const ms = value > 1e12 ? value : value * 1000
+    return new Date(ms).toISOString()
+  }
+  if (typeof value === 'string') {
+    const asNumber = Number(value)
+    if (Number.isFinite(asNumber) && value.trim() !== '') return postedAtIso(asNumber)
+    const parsed = Date.parse(value)
+    if (Number.isFinite(parsed)) return new Date(parsed).toISOString()
+  }
+  return ''
+}
+
 function yamlScalar(value: unknown): string {
   if (value == null || value === '') return ''
   if (typeof value === 'boolean' || typeof value === 'number') return String(value)
@@ -545,6 +561,7 @@ function toMarkdown(listing: JobListing, href: string, capturedAt: string): stri
     `remote_locations: ${yamlScalar(remoteLocations)}`,
     `experience_min: ${listing.yearsExperienceMin == null ? '' : String(listing.yearsExperienceMin)}`,
     `skills: ${yamlScalar(skills)}`,
+    `posted_at: ${postedAtIso(listing.liveStartAt)}`,
     `captured_at: ${capturedAt}`,
     '---',
     '',
