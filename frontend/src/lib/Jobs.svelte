@@ -19,6 +19,8 @@
   import { saveNoteBody } from './notes'
   import { jobDetailPath, navigate, parseJobId } from './router'
 
+  const PROPERTIES_OPEN_KEY = 'careeros.propertiesOpen'
+
   let { path }: { path: string } = $props()
 
   let jobs = $state<JobSummary[]>([])
@@ -38,6 +40,7 @@
   let deleteOpen = $state(false)
   let deleteJobId = $state<string | null>(null)
   let deleteFromDetail = $state(false)
+  let propertiesOpen = $state(readFlag(PROPERTIES_OPEN_KEY, false))
 
   const jobId = $derived(parseJobId(path))
   const isDetail = $derived(jobId !== null)
@@ -61,6 +64,31 @@
   onMount(() => {
     void loadList()
   })
+
+  function readFlag(key: string, fallback: boolean): boolean {
+    try {
+      const value = localStorage.getItem(key)
+      if (value === null) {
+        return fallback
+      }
+      return value === '1'
+    } catch {
+      return fallback
+    }
+  }
+
+  function writeFlag(key: string, value: boolean) {
+    try {
+      localStorage.setItem(key, value ? '1' : '0')
+    } catch {
+      // ignore quota / private-mode failures
+    }
+  }
+
+  function toggleProperties() {
+    propertiesOpen = !propertiesOpen
+    writeFlag(PROPERTIES_OPEN_KEY, propertiesOpen)
+  }
 
   $effect(() => {
     const id = jobId
@@ -410,6 +438,39 @@
     </div>
     <div class="toolbar-end">
       {#if isDetail && detail && !detailLoading && !detailError}
+        <div class="job-actions">
+          {#if detail.status === 'new'}
+            <button type="button" class="text-btn primary" disabled={statusSaving} onclick={applyCurrent}>
+              Apply
+            </button>
+            <button type="button" class="text-btn" disabled={statusSaving} onclick={deleteCurrent}>
+              Delete
+            </button>
+          {:else}
+            <label class="status-select">
+              <span class="sr-only">Status</span>
+              <select
+                value={detail.status}
+                disabled={statusSaving}
+                onchange={onCurrentStatusSelect}
+              >
+                {#each Object.entries(STATUS_LABELS) as [value, label] (value)}
+                  <option {value}>{label}</option>
+                {/each}
+              </select>
+            </label>
+            {#if isStaleApplied(detail.status, detail.applied_at)}
+              <button
+                type="button"
+                class="text-btn"
+                disabled={statusSaving}
+                onclick={markCurrentNoReply}
+              >
+                No reply?
+              </button>
+            {/if}
+          {/if}
+        </div>
         <EditorControls
           {editing}
           {saving}
@@ -418,6 +479,19 @@
           oncancel={cancelEdit}
           onsave={() => void saveEdit()}
         />
+        <button
+          type="button"
+          class="icon-btn"
+          class:active={propertiesOpen}
+          aria-label={propertiesOpen ? 'Hide properties' : 'Show properties'}
+          aria-pressed={propertiesOpen}
+          onclick={toggleProperties}
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <rect x="4" y="3.5" width="12" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7" />
+            <path d="M10 3.5v13M4 8h12M4 12.5h12" fill="none" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+        </button>
       {/if}
     {#if isDetail}
       <div class="nav-jobs" role="group" aria-label="Job navigation">
@@ -462,19 +536,21 @@
     </div>
   </header>
 
-  <div class="progress-row">
-    <div
-      class="progress"
-      role="progressbar"
-      aria-label="Inbox progress"
-      aria-valuemin="0"
-      aria-valuemax="100"
-      aria-valuenow={progressPercent}
-    >
-      <div class="progress-fill" style={`width: ${progressPercent}%`}></div>
+  {#if !isDetail}
+    <div class="progress-row">
+      <div
+        class="progress"
+        role="progressbar"
+        aria-label="Inbox progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow={progressPercent}
+      >
+        <div class="progress-fill" style={`width: ${progressPercent}%`}></div>
+      </div>
+      <p class="progress-label">{remainingLabel}</p>
     </div>
-    <p class="progress-label">{remainingLabel}</p>
-  </div>
+  {/if}
 
   {#if statusError && !deleteOpen}
     <p class="banner error">{statusError}</p>
@@ -543,69 +619,42 @@
   {:else if detailError}
     <p class="status error">{detailError}</p>
   {:else if detail}
-    <div class="detail">
+    <div class="detail" class:with-properties={propertiesOpen}>
       <article class="content">
-        <h1>{detail.name}</h1>
-        <p class="subtitle">{detail.company}</p>
+        <header class="article-head">
+          <h1>{detail.name}</h1>
+          <p class="subtitle">{detail.company}</p>
+        </header>
         {#if saveError}
           <p class="save-error">{saveError}</p>
         {/if}
-        <div class="detail-actions">
-          {#if detail.status === 'new'}
-            <button type="button" class="text-btn primary" disabled={statusSaving} onclick={applyCurrent}>
-              Apply
-            </button>
-            <button type="button" class="text-btn" disabled={statusSaving} onclick={deleteCurrent}>
-              Delete
-            </button>
-          {:else}
-            <label class="status-select">
-              Status
-              <select
-                value={detail.status}
-                disabled={statusSaving}
-                onchange={onCurrentStatusSelect}
-              >
-                {#each Object.entries(STATUS_LABELS) as [value, label] (value)}
-                  <option {value}>{label}</option>
-                {/each}
-              </select>
-            </label>
-            {#if isStaleApplied(detail.status, detail.applied_at)}
-              <button
-                type="button"
-                class="text-btn"
-                disabled={statusSaving}
-                onclick={markCurrentNoReply}
-              >
-                No reply?
-              </button>
-            {/if}
-          {/if}
-        </div>
         {#if editing}
           <MarkdownEditor bind:draft onsave={() => void saveEdit()} />
         {:else}
-          {@html marked.parse(detail.body, { async: false })}
+          <div class="prose">
+            {@html marked.parse(detail.body, { async: false })}
+          </div>
         {/if}
       </article>
-      <aside class="properties">
-        <h2>Properties</h2>
-        <dl>
-          {#each Object.entries(detail.properties) as [key, value] (key)}
-            <div class="prop">
-              <dt>{propertyLabel(key)}</dt>
-              <dd>
-                {#if isUrl(value)}
-                  <a href={value} target="_blank" rel="noreferrer">{value}</a>
-                {:else}
-                  {value || '—'}
-                {/if}
-              </dd>
-            </div>
-          {/each}
-        </dl>
-      </aside>
+      {#if propertiesOpen}
+        <aside class="properties">
+          <h2>Properties</h2>
+          <dl>
+            {#each Object.entries(detail.properties) as [key, value] (key)}
+              <div class="prop">
+                <dt>{propertyLabel(key)}</dt>
+                <dd>
+                  {#if isUrl(value)}
+                    <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                  {:else}
+                    {value || '—'}
+                  {/if}
+                </dd>
+              </div>
+            {/each}
+          </dl>
+        </aside>
+      {/if}
     </div>
   {/if}
 </div>
@@ -632,7 +681,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 12px 20px;
+    padding: 8px 16px;
     border-bottom: 1px solid var(--border);
     background: var(--bg);
     position: sticky;
@@ -656,8 +705,14 @@
     flex-wrap: wrap;
   }
 
-  .toolbar-end {
-    gap: 12px;
+  .toolbar-end,
+  .job-actions {
+    gap: 8px;
+  }
+
+  .job-actions {
+    display: flex;
+    align-items: center;
   }
 
   .stages {
@@ -844,52 +899,129 @@
 
   .detail {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
+    grid-template-columns: minmax(0, 1fr);
     flex: 1;
     min-height: 0;
   }
 
+  .detail.with-properties {
+    grid-template-columns: minmax(0, 1fr) 240px;
+  }
+
   .content {
-    padding: 32px 48px 48px;
-    max-width: 52rem;
+    padding: 16px 32px 40px;
+    max-width: 42rem;
     margin: 0 auto;
     width: 100%;
   }
 
-  .subtitle {
+  .article-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
     margin: 0 0 16px;
-    color: var(--text);
   }
 
-  .detail-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 0 24px;
+  .article-head h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    line-height: 1.3;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--text);
   }
 
   .save-error {
     margin: 0 0 16px;
   }
 
-  .content :global(h2),
-  .content :global(h3) {
+  .prose {
+    color: var(--text-body);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .prose :global(h2),
+  .prose :global(h3),
+  .prose :global(h4) {
     color: var(--text-h);
-    margin: 24px 0 8px;
+    line-height: 1.3;
+    margin: 1.6em 0 0.5em;
   }
 
-  .content :global(p),
-  .content :global(ul) {
-    margin: 0 0 12px;
+  .prose :global(h2) {
+    font-size: 1.25rem;
   }
 
-  .content :global(a) {
-    color: inherit;
+  .prose :global(h3) {
+    font-size: 1.1rem;
+  }
+
+  .prose :global(p),
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 0 0 1em;
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    padding-left: 1.35em;
+  }
+
+  .prose :global(li) {
+    margin: 0 0 0.35em;
+  }
+
+  .prose :global(li) > :global(ul),
+  .prose :global(li) > :global(ol) {
+    margin: 0.35em 0 0;
+  }
+
+  .prose :global(a) {
+    color: var(--link);
+  }
+
+  .prose :global(blockquote) {
+    margin: 0 0 1em;
+    padding: 0.15em 0 0.15em 1em;
+    border-left: 3px solid var(--border);
+    color: var(--text);
+  }
+
+  .prose :global(hr) {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 1.6em 0;
+  }
+
+  .prose :global(pre) {
+    margin: 0 0 1em;
+    padding: 12px 14px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--nav-bg);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .prose :global(code) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+  }
+
+  .prose :global(:not(pre) > code) {
+    padding: 0.12em 0.35em;
+    border-radius: 4px;
+    background: var(--nav-bg);
   }
 
   .properties {
     border-left: 1px solid var(--border);
-    padding: 24px 20px 40px;
+    padding: 16px 16px 32px;
     background: var(--nav-bg);
   }
 

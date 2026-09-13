@@ -61,6 +61,7 @@ function jobDetail(id: string) {
 }
 
 beforeEach(() => {
+  localStorage.clear()
   vi.stubGlobal('open', vi.fn())
   vi.stubGlobal(
     'fetch',
@@ -128,6 +129,7 @@ afterEach(() => {
     applied_at: '',
     deleted_reason: '',
   }
+  localStorage.clear()
   vi.unstubAllGlobals()
 })
 
@@ -236,9 +238,16 @@ test('renders job detail content and properties', async () => {
   render(Jobs, { props: { path: '/jobs/1001' } })
 
   expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
+  expect(screen.getByText('Acme')).toBeInTheDocument()
   expect(screen.getByText(/Ship the/)).toBeInTheDocument()
+  expect(screen.queryByRole('progressbar', { name: 'Inbox progress' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Properties', level: 2 })).not.toBeInTheDocument()
+
+  await fireEvent.click(screen.getByRole('button', { name: 'Show properties' }))
+
   expect(screen.getByRole('heading', { name: 'Properties', level: 2 })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'https://example.com/job' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Hide properties' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('button', { name: 'Previous job' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Next job' })).toBeEnabled()
   expect(screen.getByRole('link', { name: 'Open in Obsidian' })).toHaveAttribute(

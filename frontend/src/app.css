@@ -1,6 +1,8 @@
 :root {
   --text: #4b5563;
   --text-h: #111827;
+  --text-body: #1f2937;
+  --link: #4338ca;
   --bg: #ffffff;
   --nav-bg: #f9fafb;
   --nav-hover: #eef2ff;
@@ -10,18 +12,6 @@
   color: var(--text);
   background: var(--bg);
   font: 16px/1.5 var(--sans);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f9fafb;
-    --bg: #111827;
-    --nav-bg: #0f172a;
-    --nav-hover: #1e293b;
-    --nav-active: #1e3a5f;
-    --border: #1f2937;
-  }
 }
 
 * {
