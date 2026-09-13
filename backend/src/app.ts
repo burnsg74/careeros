@@ -3,7 +3,8 @@ import express from 'express'
 import { resolveDataDir } from './lib/dataDir.js'
 import { getContact, listContacts, updateContactBody } from './lib/contacts.js'
 import { getJobBoard, listJobBoards, updateJobBoardBody } from './lib/jobBoards.js'
-import { getJob, listJobs, updateJobBody } from './lib/jobs.js'
+import { parseJobStatusPatch } from './lib/jobStatus.js'
+import { getJob, listJobs, screenInboxJobs, updateJobBody, updateJobStatus } from './lib/jobs.js'
 
 function readBody(value: unknown): string | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -35,6 +36,15 @@ app.get('/api/jobs', async (_req, res) => {
   res.json(result.value)
 })
 
+app.post('/api/jobs/screen', async (_req, res) => {
+  const result = await screenInboxJobs()
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
 app.get('/api/jobs/:id', async (req, res) => {
   const result = await getJob(req.params.id)
   if (!result.ok) {
@@ -51,6 +61,20 @@ app.put('/api/jobs/:id', async (req, res) => {
     return
   }
   const result = await updateJobBody(req.params.id, body)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.patch('/api/jobs/:id/status', async (req, res) => {
+  const parsed = parseJobStatusPatch(req.body)
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error })
+    return
+  }
+  const result = await updateJobStatus(req.params.id, parsed.patch)
   if (!result.ok) {
     res.status(result.status).json({ error: result.error })
     return

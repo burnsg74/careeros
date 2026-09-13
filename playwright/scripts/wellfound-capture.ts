@@ -563,6 +563,7 @@ function toMarkdown(listing: JobListing, href: string, capturedAt: string): stri
     `skills: ${yamlScalar(skills)}`,
     `posted_at: ${postedAtIso(listing.liveStartAt)}`,
     `captured_at: ${capturedAt}`,
+    'status: new',
     '---',
     '',
     `[Wellfound](${jobUrl})`,

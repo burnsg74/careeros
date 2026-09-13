@@ -29,6 +29,11 @@ describe('GET /api/jobs', () => {
         compensation: '$150k – $180k',
         locations: 'Remote',
         captured_at: '2026-09-12T12:00:00.000Z',
+        status: 'new',
+        url: 'https://wellfound.com/jobs/1001-senior-engineer',
+        applied_at: '',
+        deleted_reason: '',
+        skills: 'TypeScript, Svelte',
       },
       {
         id: '1002',
@@ -37,6 +42,11 @@ describe('GET /api/jobs', () => {
         compensation: '$200k',
         locations: 'New York',
         captured_at: '2026-09-11T12:00:00.000Z',
+        status: 'new',
+        url: 'https://wellfound.com/jobs/1002-staff-engineer',
+        applied_at: '',
+        deleted_reason: '',
+        skills: 'Ruby on Rails, Python',
       },
     ])
   })

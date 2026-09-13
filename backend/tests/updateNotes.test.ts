@@ -71,6 +71,103 @@ describe('PUT /api/contacts/:id', () => {
   })
 })
 
+describe('PATCH /api/jobs/:id/status', () => {
+  it('marks a job applied and records applied_at', async () => {
+    const dir = await copyFixtures()
+
+    const response = await request(app).patch('/api/jobs/1001/status').send({ status: 'applied' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.status).toBe('applied')
+    expect(response.body.applied_at).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    expect(response.body.properties.status).toBe('applied')
+    expect(response.body.properties.applied_at).toBe(response.body.applied_at)
+
+    const raw = await readFile(join(dir, '4-Jobs', 'Acme — Senior Engineer (1001).md'), 'utf8')
+    expect(raw).toContain('status: applied')
+    expect(raw).toContain('Ship the product.')
+  })
+
+  it('requires a delete reason', async () => {
+    await copyFixtures()
+
+    const response = await request(app).patch('/api/jobs/1001/status').send({ status: 'deleted' })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({ error: 'deleted_reason is required' })
+  })
+
+  it('requires other text when the delete reason is other', async () => {
+    await copyFixtures()
+
+    const response = await request(app)
+      .patch('/api/jobs/1001/status')
+      .send({ status: 'deleted', deleted_reason: 'other' })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({ error: 'deleted_reason_other is required' })
+  })
+
+  it('rejects an invalid status', async () => {
+    await copyFixtures()
+
+    const response = await request(app).patch('/api/jobs/1001/status').send({ status: 'offer' })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({ error: 'status is invalid' })
+  })
+
+  it('saves a deleted reason', async () => {
+    const dir = await copyFixtures()
+
+    const response = await request(app)
+      .patch('/api/jobs/1001/status')
+      .send({ status: 'deleted', deleted_reason: 'compensation' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.status).toBe('deleted')
+    expect(response.body.deleted_reason).toBe('compensation')
+
+    const raw = await readFile(join(dir, '4-Jobs', 'Acme — Senior Engineer (1001).md'), 'utf8')
+    expect(raw).toContain('deleted_reason: compensation')
+  })
+
+  it('requires missing skills when that is the delete reason', async () => {
+    await copyFixtures()
+
+    const response = await request(app)
+      .patch('/api/jobs/1001/status')
+      .send({ status: 'deleted', deleted_reason: 'missing_skills' })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({ error: 'missing_skills is required' })
+  })
+
+  it('records missing skills on that job only', async () => {
+    const dir = await copyFixtures()
+
+    const response = await request(app)
+      .patch('/api/jobs/1001/status')
+      .send({
+        status: 'deleted',
+        deleted_reason: 'missing_skills',
+        missing_skills: ['Ruby on Rails'],
+      })
+
+    expect(response.status).toBe(200)
+    expect(response.body.id).toBe('1001')
+    expect(response.body.status).toBe('deleted')
+    expect(response.body.properties.missing_skills).toContain('Ruby on Rails')
+
+    const gaps = await readFile(join(dir, '3-Profile', 'Skill gaps.md'), 'utf8')
+    expect(gaps).toContain('Ruby on Rails')
+
+    const beta = await readFile(join(dir, '4-Jobs', 'Beta — Staff Engineer (1002).md'), 'utf8')
+    expect(beta).not.toContain('status: deleted')
+    expect(beta).not.toContain('deleted_auto: true')
+  })
+})
+
 describe('PUT /api/job-boards/:id', () => {
   it('updates the job board markdown body', async () => {
     const dir = await copyFixtures()

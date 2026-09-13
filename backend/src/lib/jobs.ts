@@ -1,8 +1,18 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { resolveDataDir } from './dataDir.js'
+import {
+  normalizeJobStatus,
+  type JobStatus,
+  type JobStatusPatch,
+} from './jobStatus.js'
+import { addDisqualifyingSkills, listDisqualifyingSkills } from './skillGaps.js'
+import {
+  matchingDisqualifyingSkills,
+  serializeSkillList,
+} from './skills.js'
 import { noteObsidianUrl } from './obsidian.js'
-import { parseNote, replaceNoteBody } from './parseNote.js'
+import { parseNote, replaceNoteBody, upsertFrontmatter } from './parseNote.js'
 
 export type JobSummary = {
   id: string
@@ -11,6 +21,11 @@ export type JobSummary = {
   compensation: string
   locations: string
   captured_at: string
+  status: JobStatus
+  url: string
+  applied_at: string
+  deleted_reason: string
+  skills: string
 }
 
 export type JobDetail = JobSummary & {
@@ -44,6 +59,11 @@ function toSummary(filename: string, properties: Record<string, string>): JobSum
     compensation: properties.compensation ?? '',
     locations: properties.locations ?? '',
     captured_at: properties.captured_at ?? '',
+    status: normalizeJobStatus(properties.status),
+    url: properties.url ?? '',
+    applied_at: properties.applied_at ?? '',
+    deleted_reason: properties.deleted_reason ?? '',
+    skills: properties.skills ?? '',
   }
 }
 
@@ -173,4 +193,109 @@ export async function updateJobBody(id: string, body: string): Promise<JobsResul
   }
 
   return getJob(id)
+}
+
+export async function updateJobStatus(id: string, patch: JobStatusPatch): Promise<JobsResult<JobDetail>> {
+  const found = await findJob(id)
+  if (!found.ok) {
+    return found
+  }
+
+  const now = new Date().toISOString()
+  const updates: Record<string, string> = {
+    status: patch.status,
+    status_updated_at: now,
+  }
+
+  if (patch.status === 'applied' && !found.value.properties.applied_at) {
+    updates.applied_at = now
+  }
+
+  if (patch.status === 'deleted') {
+    updates.deleted_reason = patch.deleted_reason ?? ''
+    updates.deleted_reason_other = patch.deleted_reason === 'other' ? (patch.deleted_reason_other ?? '') : ''
+    updates.missing_skills =
+      patch.deleted_reason === 'missing_skills' ? serializeSkillList(patch.missing_skills ?? []) : ''
+    updates.deleted_auto = ''
+  } else {
+    updates.deleted_reason = ''
+    updates.deleted_reason_other = ''
+    updates.missing_skills = ''
+    updates.deleted_auto = ''
+  }
+
+  const path = join(found.value.dir, found.value.filename)
+  try {
+    const raw = await readFile(path, 'utf8')
+    await writeFile(path, upsertFrontmatter(raw, updates), 'utf8')
+  } catch {
+    return { ok: false, error: 'Could not save job', status: 500 }
+  }
+
+  if (patch.status === 'deleted' && patch.deleted_reason === 'missing_skills') {
+    const names = patch.missing_skills ?? []
+    if (names.length > 0) {
+      await addDisqualifyingSkills(names)
+    }
+  }
+
+  return getJob(id)
+}
+
+export async function screenInboxJobs(): Promise<JobsResult<{ screened: number }>> {
+  const dir = jobsDir()
+  if (!dir.ok) {
+    return dir
+  }
+
+  const disqualifying = await listDisqualifyingSkills()
+  if (disqualifying.length === 0) {
+    return { ok: true, value: { screened: 0 } }
+  }
+
+  const listed = await listJobs()
+  if (!listed.ok) {
+    return listed
+  }
+
+  let screened = 0
+  const now = new Date().toISOString()
+  for (const summary of listed.value) {
+    if (summary.status !== 'new') {
+      continue
+    }
+    const found = await findJob(summary.id)
+    if (!found.ok) {
+      continue
+    }
+    const matched = matchingDisqualifyingSkills(
+      found.value.properties.skills ?? '',
+      found.value.body,
+      disqualifying,
+    )
+    if (matched.length === 0) {
+      continue
+    }
+    const path = join(found.value.dir, found.value.filename)
+    try {
+      const raw = await readFile(path, 'utf8')
+      await writeFile(
+        path,
+        upsertFrontmatter(raw, {
+          status: 'deleted',
+          status_updated_at: now,
+          deleted_reason: 'missing_skills',
+          deleted_reason_other: '',
+          missing_skills: serializeSkillList(matched),
+          deleted_auto: 'true',
+        }),
+        'utf8',
+      )
+      screened += 1
+    } catch {
+      continue
+    }
+  }
+
+  return { ok: true, value: { screened } }
 }
