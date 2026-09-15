@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { resetStores } from './bootStores'
 import Jobs from './Jobs.svelte'
 import type { JobSummary } from './jobs'
 
@@ -61,6 +62,7 @@ function jobDetail(id: string) {
 }
 
 beforeEach(() => {
+  resetStores()
   localStorage.clear()
   vi.stubGlobal('open', vi.fn())
   vi.stubGlobal(
@@ -131,6 +133,30 @@ afterEach(() => {
   }
   localStorage.clear()
   vi.unstubAllGlobals()
+})
+
+test('renders cached jobs without waiting on the network', async () => {
+  localStorage.setItem(
+    'careeros.jobs',
+    JSON.stringify({
+      v: 1,
+      data: {
+        list: jobs,
+        details: {},
+      },
+    }),
+  )
+  vi.mocked(fetch).mockImplementation(
+    () =>
+      new Promise(() => {
+        /* hang */
+      }),
+  )
+
+  render(Jobs, { props: { path: '/jobs' } })
+
+  expect(await screen.findByText('Acme')).toBeInTheDocument()
+  expect(screen.getByText('Senior Engineer')).toBeInTheDocument()
 })
 
 test('renders the job list', async () => {

@@ -3,10 +3,9 @@ export const JOB_STATUSES = ['new', 'applied', 'deleted', 'interview', 'rejected
 export type JobStatus = (typeof JOB_STATUSES)[number]
 
 export const DELETE_REASONS = [
-  'duplicate',
+  'not_interested',
   'wrong_location',
   'compensation',
-  'role_mismatch',
   'seniority',
   'company',
   'already_applied',
@@ -38,10 +37,9 @@ export const STATUS_LABELS: Record<JobStatus, string> = {
 }
 
 export const DELETE_REASON_LABELS: Record<DeleteReason, string> = {
-  duplicate: 'Duplicate',
+  not_interested: 'Not interested',
   wrong_location: 'Wrong location',
   compensation: 'Compensation',
-  role_mismatch: 'Role mismatch',
   seniority: 'Seniority',
   company: 'Company',
   already_applied: 'Already applied',

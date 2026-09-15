@@ -1,20 +1,15 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { untrack } from 'svelte'
   import { marked } from 'marked'
   import EditorControls from './EditorControls.svelte'
   import MarkdownEditor from './MarkdownEditor.svelte'
-  import type { ContactDetail, ContactSummary } from './contacts'
-  import { saveNoteBody } from './notes'
+  import { contactsStore } from './contactsStore.svelte'
   import { contactDetailPath, navigate, parseContactId } from './router'
 
   let { path }: { path: string } = $props()
 
-  let contacts = $state<ContactSummary[]>([])
-  let detail = $state<ContactDetail | null>(null)
-  let listError = $state<string | null>(null)
-  let detailError = $state<string | null>(null)
-  let listLoading = $state(true)
-  let detailLoading = $state(false)
+  contactsStore.start()
+
   let lastContactId = $state<string | null>(null)
   let editing = $state(false)
   let saving = $state(false)
@@ -22,6 +17,12 @@
   let draft = $state('')
 
   const contactId = $derived(parseContactId(path))
+  const contacts = $derived(contactsStore.list)
+  const listError = $derived(contactsStore.error)
+  const listLoading = $derived(contactsStore.listLoading)
+  const detail = $derived(contactId ? (contactsStore.getDetail(contactId) ?? null) : null)
+  const detailError = $derived(contactId ? contactsStore.detailError(contactId) : null)
+  const detailLoading = $derived(contactId ? contactsStore.isDetailLoading(contactId) : false)
   const isDetail = $derived(contactId !== null)
   const currentIndex = $derived(contactId ? contacts.findIndex((contact) => contact.id === contactId) : -1)
   const previousContact = $derived(currentIndex > 0 ? contacts[currentIndex - 1] : null)
@@ -30,16 +31,9 @@
   )
   const detailTargetId = $derived(lastContactId ?? contacts[0]?.id ?? null)
 
-  onMount(() => {
-    void loadList()
-  })
-
   $effect(() => {
     const id = contactId
     if (!id) {
-      detail = null
-      detailError = null
-      detailLoading = false
       editing = false
       saveError = null
       return
@@ -47,47 +41,10 @@
     editing = false
     saveError = null
     lastContactId = id
-    void loadDetail(id)
+    untrack(() => {
+      void contactsStore.ensureDetail(id)
+    })
   })
-
-  async function loadList() {
-    listLoading = true
-    listError = null
-    try {
-      const response = await fetch('/api/contacts')
-      if (!response.ok) {
-        throw new Error('Could not load contacts')
-      }
-      contacts = (await response.json()) as ContactSummary[]
-    } catch {
-      listError = 'Could not load contacts'
-      contacts = []
-    } finally {
-      listLoading = false
-    }
-  }
-
-  async function loadDetail(id: string) {
-    detailLoading = true
-    detailError = null
-    try {
-      const response = await fetch(`/api/contacts/${encodeURIComponent(id)}`)
-      if (response.status === 404) {
-        detail = null
-        detailError = 'Contact not found'
-        return
-      }
-      if (!response.ok) {
-        throw new Error('Could not load contact')
-      }
-      detail = (await response.json()) as ContactDetail
-    } catch {
-      detail = null
-      detailError = 'Could not load contact'
-    } finally {
-      detailLoading = false
-    }
-  }
 
   function openList() {
     navigate('/contacts')
@@ -148,12 +105,8 @@
     saving = true
     saveError = null
     try {
-      detail = await saveNoteBody<ContactDetail>(
-        `/api/contacts/${encodeURIComponent(contactId)}`,
-        draft,
-      )
+      await contactsStore.saveBody(contactId, draft)
       editing = false
-      void loadList()
     } catch {
       saveError = 'Could not save contact'
     } finally {
@@ -303,10 +256,6 @@
         </div>
       {/if}
     </section>
-  {:else if detailLoading}
-    <p class="status">Loading contact…</p>
-  {:else if detailError}
-    <p class="status error">{detailError}</p>
   {:else if detail}
     <div class="detail">
       <article class="content">
@@ -343,6 +292,10 @@
         </dl>
       </aside>
     </div>
+  {:else if detailLoading}
+    <p class="status">Loading contact…</p>
+  {:else if detailError}
+    <p class="status error">{detailError}</p>
   {/if}
 </div>
 

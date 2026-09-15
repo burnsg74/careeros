@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { untrack } from 'svelte'
   import { marked } from 'marked'
   import DeleteJobModal from './DeleteJobModal.svelte'
   import EditorControls from './EditorControls.svelte'
   import MarkdownEditor from './MarkdownEditor.svelte'
   import type { JobDetail, JobSummary } from './jobs'
-  import { patchJobStatus } from './jobs'
+  import { jobsStore } from './jobsStore.svelte'
   import {
     isStaleApplied,
     jobMatchesStage,
@@ -16,19 +16,14 @@
     type JobStageFilter,
     type JobStatus,
   } from './jobStatus'
-  import { saveNoteBody } from './notes'
   import { jobDetailPath, navigate, parseJobId } from './router'
 
   const PROPERTIES_OPEN_KEY = 'careeros.propertiesOpen'
 
   let { path }: { path: string } = $props()
 
-  let jobs = $state<JobSummary[]>([])
-  let detail = $state<JobDetail | null>(null)
-  let listError = $state<string | null>(null)
-  let detailError = $state<string | null>(null)
-  let listLoading = $state(true)
-  let detailLoading = $state(false)
+  jobsStore.start()
+
   let lastJobId = $state<string | null>(null)
   let editing = $state(false)
   let saving = $state(false)
@@ -43,6 +38,12 @@
   let propertiesOpen = $state(readFlag(PROPERTIES_OPEN_KEY, false))
 
   const jobId = $derived(parseJobId(path))
+  const jobs = $derived(jobsStore.list)
+  const listError = $derived(jobsStore.error)
+  const listLoading = $derived(jobsStore.listLoading)
+  const detail = $derived(jobId ? (jobsStore.getDetail(jobId) ?? null) : null)
+  const detailError = $derived(jobId ? jobsStore.detailError(jobId) : null)
+  const detailLoading = $derived(jobId ? jobsStore.isDetailLoading(jobId) : false)
   const isDetail = $derived(jobId !== null)
   const filteredJobs = $derived(jobs.filter((job) => jobMatchesStage(job.status, stage)))
   const currentIndex = $derived(jobId ? filteredJobs.findIndex((job) => job.id === jobId) : -1)
@@ -60,10 +61,6 @@
   const deleteListedSkills = $derived(
     jobs.find((job) => job.id === deleteJobId)?.skills ?? detail?.skills ?? '',
   )
-
-  onMount(() => {
-    void loadList()
-  })
 
   function readFlag(key: string, fallback: boolean): boolean {
     try {
@@ -93,9 +90,6 @@
   $effect(() => {
     const id = jobId
     if (!id) {
-      detail = null
-      detailError = null
-      detailLoading = false
       editing = false
       saveError = null
       statusError = null
@@ -105,49 +99,10 @@
     saveError = null
     statusError = null
     lastJobId = id
-    void loadDetail(id)
+    untrack(() => {
+      void jobsStore.ensureDetail(id)
+    })
   })
-
-  async function loadList(silent = false) {
-    if (!silent) {
-      listLoading = true
-    }
-    listError = null
-    try {
-      const response = await fetch('/api/jobs')
-      if (!response.ok) {
-        throw new Error('Could not load jobs')
-      }
-      jobs = (await response.json()) as JobSummary[]
-    } catch {
-      listError = 'Could not load jobs'
-      jobs = []
-    } finally {
-      listLoading = false
-    }
-  }
-
-  async function loadDetail(id: string) {
-    detailLoading = true
-    detailError = null
-    try {
-      const response = await fetch(`/api/jobs/${encodeURIComponent(id)}`)
-      if (response.status === 404) {
-        detail = null
-        detailError = 'Job not found'
-        return
-      }
-      if (!response.ok) {
-        throw new Error('Could not load job')
-      }
-      detail = (await response.json()) as JobDetail
-    } catch {
-      detail = null
-      detailError = 'Could not load job'
-    } finally {
-      detailLoading = false
-    }
-  }
 
   function openList() {
     navigate('/jobs')
@@ -211,9 +166,8 @@
     saving = true
     saveError = null
     try {
-      detail = await saveNoteBody<JobDetail>(`/api/jobs/${encodeURIComponent(jobId)}`, draft)
+      await jobsStore.saveBody(jobId, draft)
       editing = false
-      void loadList()
     } catch {
       saveError = 'Could not save job'
     } finally {
@@ -256,12 +210,8 @@
     statusSaving = true
     statusError = null
     try {
-      const updated = await patchJobStatus(job.id, { status: 'applied' })
+      const updated = await jobsStore.patchStatus(job.id, { status: 'applied' })
       openListing(updated)
-      jobs = jobs.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
-      if (detail?.id === updated.id) {
-        detail = updated
-      }
       advanceAfter(job.id, fromDetail, orderedIds)
     } catch {
       statusError = 'Could not update status'
@@ -295,19 +245,14 @@
     statusSaving = true
     statusError = null
     try {
-      const updated = await patchJobStatus(id, {
+      await jobsStore.patchStatus(id, {
         status: 'deleted',
         deleted_reason: reason,
         deleted_reason_other: other,
         missing_skills: missingSkills.length > 0 ? missingSkills : undefined,
       })
-      jobs = jobs.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
-      if (detail?.id === updated.id) {
-        detail = updated
-      }
       deleteOpen = false
       deleteJobId = null
-      await loadList(true)
       advanceAfter(id, fromDetail, orderedIds)
     } catch {
       statusError = 'Could not update status'
@@ -325,11 +270,7 @@
     statusSaving = true
     statusError = null
     try {
-      const updated = await patchJobStatus(id, { status })
-      jobs = jobs.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
-      if (detail?.id === updated.id) {
-        detail = updated
-      }
+      const updated = await jobsStore.patchStatus(id, { status })
       if (isDetail && jobId === id && !jobMatchesStage(updated.status, stage) && stage !== 'all') {
         advanceAfter(id, true, orderedIds)
       }
@@ -614,10 +555,6 @@
         </ul>
       {/if}
     </section>
-  {:else if detailLoading}
-    <p class="status">Loading job…</p>
-  {:else if detailError}
-    <p class="status error">{detailError}</p>
   {:else if detail}
     <div class="detail" class:with-properties={propertiesOpen}>
       <article class="content">
@@ -656,6 +593,10 @@
         </aside>
       {/if}
     </div>
+  {:else if detailLoading}
+    <p class="status">Loading job…</p>
+  {:else if detailError}
+    <p class="status error">{detailError}</p>
   {/if}
 </div>
 
@@ -910,7 +851,7 @@
 
   .content {
     padding: 16px 32px 40px;
-    max-width: 42rem;
+    max-width: 72rem;
     margin: 0 auto;
     width: 100%;
   }

@@ -5,11 +5,17 @@
   import Jobs from './lib/Jobs.svelte'
   import Contacts from './lib/Contacts.svelte'
   import JobBoards from './lib/JobBoards.svelte'
+  import { bootStores } from './lib/bootStores'
   import { getPath, isContactsPath, isJobBoardsPath, isJobsPath } from './lib/router'
 
   let path = $state(getPath())
 
+  bootStores()
+
   onMount(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7737/ingest/651a458a-b25b-4cf3-805b-b11e3ebce40f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'d01da5'},body:JSON.stringify({sessionId:'d01da5',runId:'pre-fix',hypothesisId:'B',location:'App.svelte:onMount',message:'App mounted',data:{nowMs:performance.now(),path},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const onPopState = () => {
       path = getPath()
     }

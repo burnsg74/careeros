@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { resetStores } from './bootStores'
 import Contacts from './Contacts.svelte'
 
 const contacts = [
@@ -16,6 +17,8 @@ const contacts = [
 ]
 
 beforeEach(() => {
+  resetStores()
+  localStorage.clear()
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

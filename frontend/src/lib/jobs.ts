@@ -1,3 +1,4 @@
+import { fetchJson } from './http'
 import type { JobStatus, JobStatusPatch } from './jobStatus'
 
 export type JobSummary = {
@@ -18,6 +19,30 @@ export type JobDetail = JobSummary & {
   properties: Record<string, string>
   body: string
   obsidianUrl: string
+}
+
+export function jobToSummary(job: JobDetail): JobSummary {
+  return {
+    id: job.id,
+    name: job.name,
+    company: job.company,
+    compensation: job.compensation,
+    locations: job.locations,
+    captured_at: job.captured_at,
+    status: job.status,
+    url: job.url,
+    applied_at: job.applied_at,
+    deleted_reason: job.deleted_reason,
+    skills: job.skills,
+  }
+}
+
+export async function fetchJobs(): Promise<JobSummary[]> {
+  return fetchJson<JobSummary[]>('/api/jobs')
+}
+
+export async function fetchJob(id: string): Promise<JobDetail> {
+  return fetchJson<JobDetail>(`/api/jobs/${encodeURIComponent(id)}`)
 }
 
 export async function patchJobStatus(id: string, patch: JobStatusPatch): Promise<JobDetail> {

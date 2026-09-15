@@ -1,20 +1,15 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { untrack } from 'svelte'
   import { marked } from 'marked'
   import EditorControls from './EditorControls.svelte'
   import MarkdownEditor from './MarkdownEditor.svelte'
-  import type { JobBoardDetail, JobBoardSummary } from './jobBoards'
-  import { saveNoteBody } from './notes'
+  import { jobBoardsStore } from './jobBoardsStore.svelte'
   import { jobBoardDetailPath, navigate, parseJobBoardId } from './router'
 
   let { path }: { path: string } = $props()
 
-  let boards = $state<JobBoardSummary[]>([])
-  let detail = $state<JobBoardDetail | null>(null)
-  let listError = $state<string | null>(null)
-  let detailError = $state<string | null>(null)
-  let listLoading = $state(true)
-  let detailLoading = $state(false)
+  jobBoardsStore.start()
+
   let lastBoardId = $state<string | null>(null)
   let editing = $state(false)
   let saving = $state(false)
@@ -22,6 +17,12 @@
   let draft = $state('')
 
   const boardId = $derived(parseJobBoardId(path))
+  const boards = $derived(jobBoardsStore.list)
+  const listError = $derived(jobBoardsStore.error)
+  const listLoading = $derived(jobBoardsStore.listLoading)
+  const detail = $derived(boardId ? (jobBoardsStore.getDetail(boardId) ?? null) : null)
+  const detailError = $derived(boardId ? jobBoardsStore.detailError(boardId) : null)
+  const detailLoading = $derived(boardId ? jobBoardsStore.isDetailLoading(boardId) : false)
   const isDetail = $derived(boardId !== null)
   const currentIndex = $derived(boardId ? boards.findIndex((board) => board.id === boardId) : -1)
   const previousBoard = $derived(currentIndex > 0 ? boards[currentIndex - 1] : null)
@@ -30,16 +31,9 @@
   )
   const detailTargetId = $derived(lastBoardId ?? boards[0]?.id ?? null)
 
-  onMount(() => {
-    void loadList()
-  })
-
   $effect(() => {
     const id = boardId
     if (!id) {
-      detail = null
-      detailError = null
-      detailLoading = false
       editing = false
       saveError = null
       return
@@ -47,47 +41,10 @@
     editing = false
     saveError = null
     lastBoardId = id
-    void loadDetail(id)
+    untrack(() => {
+      void jobBoardsStore.ensureDetail(id)
+    })
   })
-
-  async function loadList() {
-    listLoading = true
-    listError = null
-    try {
-      const response = await fetch('/api/job-boards')
-      if (!response.ok) {
-        throw new Error('Could not load job boards')
-      }
-      boards = (await response.json()) as JobBoardSummary[]
-    } catch {
-      listError = 'Could not load job boards'
-      boards = []
-    } finally {
-      listLoading = false
-    }
-  }
-
-  async function loadDetail(id: string) {
-    detailLoading = true
-    detailError = null
-    try {
-      const response = await fetch(`/api/job-boards/${encodeURIComponent(id)}`)
-      if (response.status === 404) {
-        detail = null
-        detailError = 'Job board not found'
-        return
-      }
-      if (!response.ok) {
-        throw new Error('Could not load job board')
-      }
-      detail = (await response.json()) as JobBoardDetail
-    } catch {
-      detail = null
-      detailError = 'Could not load job board'
-    } finally {
-      detailLoading = false
-    }
-  }
 
   function openList() {
     navigate('/job-boards')
@@ -148,12 +105,8 @@
     saving = true
     saveError = null
     try {
-      detail = await saveNoteBody<JobBoardDetail>(
-        `/api/job-boards/${encodeURIComponent(boardId)}`,
-        draft,
-      )
+      await jobBoardsStore.saveBody(boardId, draft)
       editing = false
-      void loadList()
     } catch {
       saveError = 'Could not save job board'
     } finally {
@@ -305,10 +258,6 @@
         </div>
       {/if}
     </section>
-  {:else if detailLoading}
-    <p class="status">Loading job board…</p>
-  {:else if detailError}
-    <p class="status error">{detailError}</p>
   {:else if detail}
     <div class="detail">
       <article class="content">
@@ -345,6 +294,10 @@
         </dl>
       </aside>
     </div>
+  {:else if detailLoading}
+    <p class="status">Loading job board…</p>
+  {:else if detailError}
+    <p class="status error">{detailError}</p>
   {/if}
 </div>
 

@@ -3,6 +3,10 @@
   import 'easymde/dist/easymde.min.css'
   import { onDestroy, onMount } from 'svelte'
 
+  // #region agent log
+  fetch('http://127.0.0.1:7737/ingest/651a458a-b25b-4cf3-805b-b11e3ebce40f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'d01da5'},body:JSON.stringify({sessionId:'d01da5',runId:'pre-fix',hypothesisId:'A',location:'MarkdownEditor.svelte:module',message:'EasyMDE module evaluated',data:{nowMs:performance.now(),path:location.pathname},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+
   let {
     draft = $bindable(''),
     onsave,
@@ -27,6 +31,9 @@
       return
     }
 
+    // #region agent log
+    fetch('http://127.0.0.1:7737/ingest/651a458a-b25b-4cf3-805b-b11e3ebce40f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'d01da5'},body:JSON.stringify({sessionId:'d01da5',runId:'pre-fix',hypothesisId:'E',location:'MarkdownEditor.svelte:onMount',message:'EasyMDE constructed (Font Awesome download may start)',data:{nowMs:performance.now(),path:location.pathname},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     editor = new EasyMDE({
       element: textarea,
       initialValue: draft,
