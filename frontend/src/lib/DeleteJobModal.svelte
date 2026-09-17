@@ -22,16 +22,18 @@
     onconfirm: (reason: DeleteReason, other: string, missingSkills: string[]) => void
   } = $props()
 
-  let reason = $state<DeleteReason>('duplicate')
+  let reason = $state<DeleteReason>('not_interested')
   let other = $state('')
   let extraSkill = $state('')
   let rows = $state<SkillRow[]>([])
+  let submitted = false
 
   $effect(() => {
     if (open) {
-      reason = 'duplicate'
+      reason = 'not_interested'
       other = ''
       extraSkill = ''
+      submitted = false
       rows = parseSkillList(listedSkills).map((name) => ({
         name,
         selected: false,
@@ -45,6 +47,12 @@
       (reason !== 'other' || other.trim() !== '') &&
       (reason !== 'missing_skills' || selectedSkills.length > 0),
   )
+
+  $effect(() => {
+    if (open && !saving) {
+      submitted = false
+    }
+  })
 
   function addSkill() {
     const name = extraSkill.trim()
@@ -61,14 +69,45 @@
     extraSkill = ''
   }
 
+  function confirmCurrent() {
+    if (!canConfirm || submitted) {
+      return
+    }
+    submitted = true
+    onconfirm(reason, other.trim(), reason === 'missing_skills' ? selectedSkills : [])
+  }
+
   function submit(event: SubmitEvent) {
     event.preventDefault()
+    confirmCurrent()
+  }
+
+  function focusSubmit(node: HTMLButtonElement) {
+    node.focus()
+  }
+
+  function onWindowKeydown(event: KeyboardEvent) {
+    if (!open || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
+      return
+    }
+    if (event.key !== 'Enter' || event.isComposing) {
+      return
+    }
+    const target = event.target
+    if (target instanceof HTMLInputElement && target.type === 'text' && extraSkill.trim()) {
+      event.preventDefault()
+      addSkill()
+      return
+    }
     if (!canConfirm) {
       return
     }
-    onconfirm(reason, other.trim(), reason === 'missing_skills' ? selectedSkills : [])
+    event.preventDefault()
+    confirmCurrent()
   }
 </script>
+
+<svelte:window onkeydown={onWindowKeydown} />
 
 {#if open}
   <div class="backdrop">
@@ -127,7 +166,7 @@
         {/if}
         <div class="actions">
           <button type="button" disabled={saving} onclick={oncancel}>Cancel</button>
-          <button type="submit" class="primary" disabled={!canConfirm}>
+          <button type="submit" class="primary" disabled={!canConfirm} {@attach focusSubmit}>
             {saving ? 'Deleting…' : 'Delete'}
           </button>
         </div>

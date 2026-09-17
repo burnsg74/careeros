@@ -122,14 +122,14 @@ describe('PATCH /api/jobs/:id/status', () => {
 
     const response = await request(app)
       .patch('/api/jobs/1001/status')
-      .send({ status: 'deleted', deleted_reason: 'compensation' })
+      .send({ status: 'deleted', deleted_reason: 'not_interested' })
 
     expect(response.status).toBe(200)
     expect(response.body.status).toBe('deleted')
-    expect(response.body.deleted_reason).toBe('compensation')
+    expect(response.body.deleted_reason).toBe('not_interested')
 
     const raw = await readFile(join(dir, '4-Jobs', 'Acme — Senior Engineer (1001).md'), 'utf8')
-    expect(raw).toContain('deleted_reason: compensation')
+    expect(raw).toContain('deleted_reason: not_interested')
   })
 
   it('requires missing skills when that is the delete reason', async () => {

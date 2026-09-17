@@ -5,6 +5,7 @@ export const JOB_STATUSES = ['new', 'applied', 'deleted', 'interview', 'rejected
 export type JobStatus = (typeof JOB_STATUSES)[number]
 
 export const DELETE_REASONS = [
+  'not_interested',
   'duplicate',
   'wrong_location',
   'compensation',

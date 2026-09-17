@@ -218,7 +218,7 @@ test('opens a delete reason dialog', async () => {
         method: 'PATCH',
         body: JSON.stringify({
           status: 'deleted',
-          deleted_reason: 'duplicate',
+          deleted_reason: 'not_interested',
           deleted_reason_other: '',
         }),
       }),
@@ -317,4 +317,64 @@ test('switching stage from detail opens the first job in that stage', async () =
 
   expect(push).toHaveBeenCalledWith({}, '', '/jobs/1003')
   push.mockRestore()
+})
+
+test('detail shortcuts move between jobs and apply or delete the current one', async () => {
+  const push = vi.spyOn(history, 'pushState')
+  const view = render(Jobs, { props: { path: '/jobs/1001' } })
+
+  expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Apply' })).toHaveAttribute('aria-keyshortcuts', 'a')
+  expect(screen.getByRole('button', { name: 'Delete' })).toHaveAttribute('aria-keyshortcuts', 'd')
+
+  await fireEvent.keyDown(window, { key: 'n' })
+  expect(push).toHaveBeenCalledWith({}, '', '/jobs/1002')
+
+  await view.rerender({ path: '/jobs/1002' })
+  expect(await screen.findByRole('heading', { name: 'Staff Engineer', level: 1 })).toBeInTheDocument()
+  await fireEvent.keyDown(window, { key: 'p' })
+  expect(push).toHaveBeenCalledWith({}, '', '/jobs/1001')
+
+  await view.rerender({ path: '/jobs/1001' })
+  expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
+  await fireEvent.keyDown(window, { key: 'd' })
+  expect(screen.getByRole('dialog', { name: 'Delete job' })).toBeInTheDocument()
+  expect(screen.getByRole('combobox', { name: 'Reason' })).toHaveValue('not_interested')
+  await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+  await fireEvent.keyDown(window, { key: 'a' })
+  await waitFor(() => {
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+      '/api/jobs/1001/status',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'applied' }),
+      }),
+    )
+  })
+
+  push.mockRestore()
+})
+
+test('D then Enter deletes with Not interested', async () => {
+  render(Jobs, { props: { path: '/jobs/1001' } })
+
+  expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
+  await fireEvent.keyDown(window, { key: 'd' })
+  expect(screen.getByRole('combobox', { name: 'Reason' })).toHaveValue('not_interested')
+  await fireEvent.keyDown(window, { key: 'Enter' })
+
+  await waitFor(() => {
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+      '/api/jobs/1001/status',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'deleted',
+          deleted_reason: 'not_interested',
+          deleted_reason_other: '',
+        }),
+      }),
+    )
+  })
 })

@@ -291,15 +291,73 @@
     void setStatus(id, next)
   }
 
+  function goToPrevious() {
+    if (previousJob) {
+      openJob(previousJob.id)
+    }
+  }
+
+  function goToNext() {
+    if (nextJob) {
+      openJob(nextJob.id)
+    }
+  }
+
   function applyCurrent() {
-    if (detail) {
+    if (detail?.status === 'new' && !statusSaving) {
       void applyJob(detail, true)
     }
   }
 
   function deleteCurrent() {
-    if (detail) {
+    if (detail?.status === 'new' && !statusSaving) {
       startDelete(detail.id, true)
+    }
+  }
+
+  function isTypingTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) {
+      return false
+    }
+    const tag = target.tagName
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+  }
+
+  function onWindowKeydown(event: KeyboardEvent) {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
+      return
+    }
+    if (!isDetail || editing || deleteOpen || isTypingTarget(event.target)) {
+      return
+    }
+
+    const key = event.key.toLowerCase()
+    if (key === 'n' || key === 'arrowright') {
+      if (nextJob) {
+        event.preventDefault()
+        goToNext()
+      }
+      return
+    }
+    if (key === 'p' || key === 'arrowleft') {
+      if (previousJob) {
+        event.preventDefault()
+        goToPrevious()
+      }
+      return
+    }
+    if (key === 'a') {
+      if (detail?.status === 'new' && !statusSaving) {
+        event.preventDefault()
+        applyCurrent()
+      }
+      return
+    }
+    if (key === 'd') {
+      if (detail?.status === 'new' && !statusSaving) {
+        event.preventDefault()
+        deleteCurrent()
+      }
     }
   }
 
@@ -315,6 +373,8 @@
     }
   }
 </script>
+
+<svelte:window onkeydown={onWindowKeydown} />
 
 <div class="page">
   <header class="toolbar">
@@ -381,11 +441,25 @@
       {#if isDetail && detail && !detailLoading && !detailError}
         <div class="job-actions">
           {#if detail.status === 'new'}
-            <button type="button" class="text-btn primary" disabled={statusSaving} onclick={applyCurrent}>
-              Apply
+            <button
+              type="button"
+              class="text-btn primary"
+              disabled={statusSaving}
+              title="Apply (A)"
+              aria-keyshortcuts="a"
+              onclick={applyCurrent}
+            >
+              Apply <kbd aria-hidden="true">A</kbd>
             </button>
-            <button type="button" class="text-btn" disabled={statusSaving} onclick={deleteCurrent}>
-              Delete
+            <button
+              type="button"
+              class="text-btn"
+              disabled={statusSaving}
+              title="Delete (D)"
+              aria-keyshortcuts="d"
+              onclick={deleteCurrent}
+            >
+              Delete <kbd aria-hidden="true">D</kbd>
             </button>
           {:else}
             <label class="status-select">
@@ -440,8 +514,10 @@
           type="button"
           class="icon-btn"
           aria-label="Previous job"
+          title="Previous job (P)"
+          aria-keyshortcuts="p ArrowLeft"
           disabled={!previousJob}
-          onclick={() => previousJob && openJob(previousJob.id)}
+          onclick={goToPrevious}
         >
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path
@@ -458,8 +534,10 @@
           type="button"
           class="icon-btn"
           aria-label="Next job"
+          title="Next job (N)"
+          aria-keyshortcuts="n ArrowRight"
           disabled={!nextJob}
-          onclick={() => nextJob && openJob(nextJob.id)}
+          onclick={goToNext}
         >
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path
@@ -654,6 +732,16 @@
   .job-actions {
     display: flex;
     align-items: center;
+  }
+
+  kbd {
+    font: inherit;
+    font-size: 0.7rem;
+    margin-left: 6px;
+    padding: 1px 5px;
+    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+    border-radius: 4px;
+    opacity: 0.75;
   }
 
   .stages {

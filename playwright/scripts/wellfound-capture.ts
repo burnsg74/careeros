@@ -4,6 +4,14 @@ import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium, type Browser, type Page, type Response } from 'playwright'
+import {
+  createJobFitScorer,
+  fitFrontmatterEntries,
+  renderFitReport,
+  type JobFitResult,
+  type JobFitScorer,
+  type FitErrorSlug,
+} from './jobFit.js'
 
 const JOBS_URL = 'https://wellfound.com/jobs'
 const JOB_HREF_RE = /^\/jobs\/(\d+)-([^/?#]+)/
@@ -62,6 +70,7 @@ type CaptureRecord = {
 
 type JobLink = { href: string; jobId: string; slug: string; title: string }
 type ListingCard = { company: string; text: string; jobs: JobLink[] }
+type FitContext = { scorer: JobFitScorer | null; fallback: FitErrorSlug | null }
 
 type Tagged = { displayName?: string | null }
 type JobPerk = { title?: string | null; description?: string | null }
@@ -532,7 +541,12 @@ function jobMarkdownPath(dir: string, listing: JobListing, fallbackId: string, f
   return path.join(dir, `${company} — ${title} (${id}).md`)
 }
 
-function toMarkdown(listing: JobListing, href: string, capturedAt: string): string {
+function toMarkdown(
+  listing: JobListing,
+  href: string,
+  capturedAt: string,
+  evaluation: JobFitResult | null,
+): string {
   const id = listing.id == null ? '' : String(listing.id)
   const slug = listing.slug || ''
   const title = listing.title || slug || 'Job'
@@ -563,12 +577,14 @@ function toMarkdown(listing: JobListing, href: string, capturedAt: string): stri
     `skills: ${yamlScalar(skills)}`,
     `posted_at: ${postedAtIso(listing.liveStartAt)}`,
     `captured_at: ${capturedAt}`,
-    'status: new',
-    '---',
-    '',
-    `[Wellfound](${jobUrl})`,
-    '',
   ]
+  for (const [key, value] of fitFrontmatterEntries(evaluation)) {
+    lines.push(`${key}: ${yamlScalar(value)}`)
+  }
+  lines.push('---', '', `[Wellfound](${jobUrl})`, '')
+  if (evaluation?.ok) {
+    lines.push(...renderFitReport(evaluation))
+  }
   if (listing.startup?.highConcept) {
     lines.push(listing.startup.highConcept, '')
   }
@@ -674,7 +690,22 @@ async function closeJobDetail(page: Page): Promise<void> {
   await page.waitForSelector(STARTUP_RESULT, { timeout: 15_000 }).catch(() => undefined)
 }
 
-async function captureJobDetails(page: Page, jobUrls: string[]): Promise<{ skipped: number; written: number; failed: number }> {
+async function evaluateFit(fit: FitContext, posting: string): Promise<JobFitResult | null> {
+  if (!fit.scorer) {
+    return fit.fallback ? { ok: false, error: fit.fallback, detail: 'scorer unavailable' } : null
+  }
+  const result = await fit.scorer.evaluate(posting)
+  if (!result.ok) {
+    console.warn(`Fit scoring failed (${result.error}): ${result.detail}`)
+  }
+  return result
+}
+
+async function captureJobDetails(
+  page: Page,
+  jobUrls: string[],
+  fit: FitContext,
+): Promise<{ skipped: number; written: number; failed: number; fitCounts: Record<string, number> }> {
   const knownIds = existingJobIds(JOBS_VAULT_DIR)
   console.log(`Vault ${JOBS_VAULT_DIR}: ${knownIds.size} existing job notes`)
   const limit = Math.min(jobUrls.length, MAX_JOBS)
@@ -683,6 +714,7 @@ async function captureJobDetails(page: Page, jobUrls: string[]): Promise<{ skipp
   let skipped = 0
   let written = 0
   let failed = 0
+  const fitCounts: Record<string, number> = {}
   for (let i = 0; i < limit; i++) {
     const parsed = parseJobHref(jobUrls[i])
     if (!parsed) continue
@@ -718,10 +750,15 @@ async function captureJobDetails(page: Page, jobUrls: string[]): Promise<{ skipp
       } else {
         const capturedAt = new Date().toISOString()
         const mdPath = jobMarkdownPath(JOBS_VAULT_DIR, listing, parsed.jobId, parsed.slug)
-        enqueueWriteText(mdPath, toMarkdown(listing, parsed.href, capturedAt))
+        const evaluation = await evaluateFit(fit, toMarkdown(listing, parsed.href, capturedAt, null))
+        const outcome =
+          evaluation == null ? 'unscored' : evaluation.ok ? evaluation.computed.recommendation : evaluation.error
+        const detail = evaluation?.ok ? `${outcome} ${evaluation.computed.score}/10` : outcome
+        fitCounts[outcome] = (fitCounts[outcome] ?? 0) + 1
+        enqueueWriteText(mdPath, toMarkdown(listing, parsed.href, capturedAt, evaluation))
         knownIds.add(parsed.jobId)
         written += 1
-        console.log(`Wrote ${path.basename(mdPath)}`)
+        console.log(`Wrote ${path.basename(mdPath)} (${detail})`)
       }
     } catch (err) {
       failed += 1
@@ -734,7 +771,7 @@ async function captureJobDetails(page: Page, jobUrls: string[]): Promise<{ skipp
     await closeJobDetail(page)
     await sleep(BETWEEN_JOBS_MS)
   }
-  return { skipped, written, failed }
+  return { skipped, written, failed, fitCounts }
 }
 
 async function jobsPage(browser: Browser): Promise<Page> {
@@ -755,7 +792,22 @@ async function jobsPage(browser: Browser): Promise<Page> {
   return page
 }
 
+// Resolved before Chrome launches so a broken prompt file fails the run immediately
+// rather than after a full scrape.
+function resolveFitContext(): FitContext {
+  if (process.env.WELLFOUND_SCORE_JOBS === '0') {
+    console.log('Job fit scoring disabled (WELLFOUND_SCORE_JOBS=0)')
+    return { scorer: null, fallback: null }
+  }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.warn('ANTHROPIC_API_KEY is not set; notes will be written with fit_error: no_api_key')
+    return { scorer: null, fallback: 'no_api_key' }
+  }
+  return { scorer: createJobFitScorer(), fallback: null }
+}
+
 async function main(): Promise<void> {
+  const fit = resolveFitContext()
   fs.mkdirSync(networkDir, { recursive: true })
   let browser: Browser | undefined
   try {
@@ -767,12 +819,15 @@ async function main(): Promise<void> {
     await scrollUntilStable(page)
     const listings = await readListings(page)
     enqueueWrite(path.join(outDir, 'listings.json'), listings)
-    const jobStats = await captureJobDetails(page, listings.jobUrls)
+    const jobStats = await captureJobDetails(page, listings.jobUrls, fit)
     await writeChain
     writeNetworkIndex()
     await writeChain
+    const fitSummary = Object.entries(jobStats.fitCounts)
+      .map(([outcome, count]) => `${outcome}=${count}`)
+      .join(' ')
     console.log(
-      `Wrote ${captures.length} network captures, ${listings.jobUrls.length} listing jobs to ${outDir}; vault notes written=${jobStats.written} skipped=${jobStats.skipped} failed=${jobStats.failed}`,
+      `Wrote ${captures.length} network captures, ${listings.jobUrls.length} listing jobs to ${outDir}; vault notes written=${jobStats.written} skipped=${jobStats.skipped} failed=${jobStats.failed}${fitSummary ? `; fit ${fitSummary}` : ''}`,
     )
   } finally {
     pageOffSafe(browser)
