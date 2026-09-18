@@ -17,6 +17,7 @@
     type JobStatus,
   } from './jobStatus'
   import { jobDetailPath, navigate, parseJobId } from './router'
+  import { buildJobDetailView } from './jobDetailView'
 
   const PROPERTIES_OPEN_KEY = 'careeros.propertiesOpen'
 
@@ -61,6 +62,7 @@
   const deleteListedSkills = $derived(
     jobs.find((job) => job.id === deleteJobId)?.skills ?? detail?.skills ?? '',
   )
+  const view = $derived(detail ? buildJobDetailView(detail) : null)
 
   function readFlag(key: string, fallback: boolean): boolean {
     try {
@@ -637,8 +639,58 @@
     <div class="detail" class:with-properties={propertiesOpen}>
       <article class="content">
         <header class="article-head">
-          <h1>{detail.name}</h1>
-          <p class="subtitle">{detail.company}</p>
+          <div class="headline">
+            {#if view?.fitLabel}
+              <span class="fit-badge" data-fit={detail.properties.fit_recommendation ?? ''}>{view.fitLabel}</span>
+            {/if}
+            <div class="title-row">
+              <h1>{detail.name}</h1>
+              {#if view?.postingUrl}
+                <a
+                  class="external-link"
+                  href={view.postingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open job posting in a new tab"
+                  title="Open job posting"
+                >
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path
+                      d="M8 4H5.5A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5V12"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M11 4h5v5M16 4l-7 7"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </a>
+              {/if}
+            </div>
+            {#if view?.companyUrl}
+              <a class="company-link" href={view.companyUrl} target="_blank" rel="noreferrer">{detail.company}</a>
+            {:else if detail.company}
+              <span class="company-name">{detail.company}</span>
+            {/if}
+            {#if detail.compensation}
+              <span class="comp">{detail.compensation}</span>
+            {/if}
+          </div>
+          {#if view}
+            <p class="skills-line"><span class="skills-label">Have:</span> {view.haveCsv}</p>
+            <p class="skills-line"><span class="skills-label">Familiar:</span> {view.familiarCsv}</p>
+            <p class="skills-line"><span class="skills-label">Don't have:</span> {view.dontHaveCsv}</p>
+            {#if view.location}
+              <p class="location">{view.location}</p>
+            {/if}
+          {/if}
         </header>
         {#if saveError}
           <p class="save-error">{saveError}</p>
@@ -646,9 +698,14 @@
         {#if editing}
           <MarkdownEditor bind:draft onsave={() => void saveEdit()} />
         {:else}
-          <div class="prose">
-            {@html marked.parse(detail.body, { async: false })}
-          </div>
+          {#if view?.summary}
+            <p class="fit-summary">{view.summary}</p>
+          {/if}
+          {#if view?.postingMarkdown}
+            <div class="prose">
+              {@html marked.parse(view.postingMarkdown, { async: false })}
+            </div>
+          {/if}
         {/if}
       </article>
       {#if propertiesOpen}
@@ -938,29 +995,110 @@
   }
 
   .content {
-    padding: 16px 32px 40px;
-    max-width: 72rem;
-    margin: 0 auto;
+    padding: 12px 20px 32px;
     width: 100%;
   }
 
   .article-head {
     display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 0 12px;
+  }
+
+  .headline {
+    display: flex;
     align-items: baseline;
-    gap: 12px;
+    gap: 8px 14px;
     flex-wrap: wrap;
-    margin: 0 0 16px;
+  }
+
+  .title-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
   }
 
   .article-head h1 {
     margin: 0;
-    font-size: 1.35rem;
-    line-height: 1.3;
+    font-size: 1.15rem;
+    line-height: 1.25;
   }
 
-  .subtitle {
-    margin: 0;
+  .fit-badge {
+    font-size: 0.75rem;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--nav-active);
+    color: var(--text-h);
+    white-space: nowrap;
+  }
+
+  .fit-badge[data-fit='HOLD'] {
+    background: #fef3c7;
+  }
+
+  .fit-badge[data-fit='SKIP'] {
+    background: #fee2e2;
+  }
+
+  .external-link {
+    display: inline-flex;
+    color: var(--link);
+    line-height: 0;
+  }
+
+  .external-link svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .company-link,
+  .company-name {
+    color: var(--link);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .company-name {
     color: var(--text);
+  }
+
+  .company-link:hover {
+    text-decoration: underline;
+  }
+
+  .comp {
+    color: var(--text-h);
+    font-weight: 500;
+  }
+
+  .skills-line {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    color: var(--text-body);
+  }
+
+  .skills-label {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .location {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text);
+  }
+
+  .fit-summary {
+    margin: 0 0 1em;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: var(--text-body);
   }
 
   .save-error {
@@ -969,8 +1107,8 @@
 
   .prose {
     color: var(--text-body);
-    font-size: 1.05rem;
-    line-height: 1.7;
+    font-size: 0.95rem;
+    line-height: 1.45;
   }
 
   .prose :global(h2),
@@ -978,21 +1116,21 @@
   .prose :global(h4) {
     color: var(--text-h);
     line-height: 1.3;
-    margin: 1.6em 0 0.5em;
+    margin: 1.1em 0 0.35em;
   }
 
   .prose :global(h2) {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 
   .prose :global(h3) {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .prose :global(p),
   .prose :global(ul),
   .prose :global(ol) {
-    margin: 0 0 1em;
+    margin: 0 0 0.7em;
   }
 
   .prose :global(ul),
@@ -1023,7 +1161,7 @@
   .prose :global(hr) {
     border: 0;
     border-top: 1px solid var(--border);
-    margin: 1.6em 0;
+    margin: 1.1em 0;
   }
 
   .prose :global(pre) {

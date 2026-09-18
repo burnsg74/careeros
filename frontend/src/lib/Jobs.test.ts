@@ -46,8 +46,61 @@ const jobs: JobSummary[] = [
   },
 ]
 
+const fitBody = `[Wellfound](https://example.com/job)
+
+## Fit Evaluation
+
+**STRONG_PASS - 10/10** | required match 100% | overall match 96%
+
+base 9 from 100% required match; +1 small team or ownership culture
+
+Strong fit. TypeScript and Svelte are core strengths for Greg. The role is a good match, which Greg can own end to end; highlight AI tools that Greg should mention as part of his modern workflow.
+
+### Skills
+
+| Skill | Requirement | Tier | Status | Note |
+| --- | --- | --- | --- | --- |
+| TypeScript | required | 1 | HAVE |  |
+| Svelte | required | 1 | HAVE |  |
+| GraphQL | nice | 3 | TOUCHED |  |
+| Go | required | 4 | DONT_HAVE |  |
+
+### Compensation
+
+- Range: $150k – $180k
+
+Ship the **product**.
+`
+
+function skillsLine(label: string) {
+  return screen.getByText((_, el) => {
+    if (!(el instanceof HTMLElement) || !el.classList.contains('skills-line')) {
+      return false
+    }
+    return (el.textContent ?? '').includes(label)
+  })
+}
+
 function jobDetail(id: string) {
   const job = jobs.find((item) => item.id === id) ?? jobs[0]
+  if (id === '1001') {
+    return {
+      ...job,
+      properties: {
+        name: job.name,
+        company: job.company,
+        url: job.url,
+        company_url: 'https://wellfound.com/company/acme',
+        remote_locations: 'United States',
+        status: job.status,
+        fit_score: '10',
+        fit_recommendation: 'STRONG_PASS',
+        fit_missing_skills: 'Go',
+      },
+      body: fitBody,
+      obsidianUrl: 'obsidian://open?vault=CareerOS&file=4-Jobs%2FAcme',
+    }
+  }
   return {
     ...job,
     properties: {
@@ -264,7 +317,22 @@ test('renders job detail content and properties', async () => {
   render(Jobs, { props: { path: '/jobs/1001' } })
 
   expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
-  expect(screen.getByText('Acme')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Open job posting in a new tab' })).toHaveAttribute(
+    'href',
+    'https://example.com/job',
+  )
+  expect(screen.getByRole('link', { name: 'Acme' })).toHaveAttribute(
+    'href',
+    'https://wellfound.com/company/acme',
+  )
+  expect(screen.getByText('$150k – $180k')).toBeInTheDocument()
+  expect(screen.getByText('Strong pass 10/10')).toBeInTheDocument()
+  expect(skillsLine('Have:')).toHaveTextContent('Have: TypeScript, Svelte')
+  expect(skillsLine('Familiar:')).toHaveTextContent('Familiar: GraphQL')
+  expect(skillsLine("Don't have:")).toHaveTextContent("Don't have: Go")
+  expect(screen.getByText(/core strengths/)).toHaveTextContent(/you can own/)
+  expect(screen.queryByText(/for Greg/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/required match 100%/)).not.toBeInTheDocument()
   expect(screen.getByText(/Ship the/)).toBeInTheDocument()
   expect(screen.queryByRole('progressbar', { name: 'Inbox progress' })).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Properties', level: 2 })).not.toBeInTheDocument()
@@ -291,7 +359,7 @@ test('edits and saves job markdown', async () => {
   await fireEvent.click(screen.getByRole('button', { name: 'Edit markdown' }))
 
   const editor = screen.getByRole('textbox', { name: 'Markdown' })
-  expect(editor).toHaveValue('Ship the **product**.')
+  expect(editor).toHaveValue(fitBody)
   await fireEvent.input(editor, { target: { value: 'Updated **role**.' } })
   await fireEvent.click(screen.getByRole('button', { name: 'Save markdown' }))
 

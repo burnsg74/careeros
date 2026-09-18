@@ -4,6 +4,7 @@ import {
   computeFit,
   fitFrontmatterEntries,
   loadFitPrompt,
+  renderFitReport,
   type FitSkill,
   type JobFit,
 } from './jobFit.js'
@@ -554,6 +555,25 @@ describe('fitFrontmatterEntries', () => {
     expect(entries.get('deleted_reason')).toBe('wrong_location')
     expect(entries.get('missing_skills')).toBe('')
     expect(entries.get('fit_score')).toBe('0')
+  })
+})
+
+describe('renderFitReport', () => {
+  it('prints a compact verdict without match percentages or score breakdown', () => {
+    const fit = fixture()
+    const text = renderFitReport({
+      ok: true,
+      fit,
+      computed: computeFit(fit),
+      model: 'test-model',
+      evaluatedAt: '2026-09-17T00:00:00.000Z',
+    }).join('\n')
+    expect(text).toContain('**Strong pass 9/10**')
+    expect(text).not.toContain('required match')
+    expect(text).not.toContain('overall match')
+    expect(text).not.toContain('base 9')
+    expect(text).toContain('| Skill |')
+    expect(text).toContain('Good fit.')
   })
 })
 

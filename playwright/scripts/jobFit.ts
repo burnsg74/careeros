@@ -3,7 +3,7 @@ import path from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 
-export const FIT_MODEL = 'claude-3-5-haiku-latest'
+export const FIT_MODEL = 'claude-haiku-4-5'
 
 const MAX_TOKENS = 2048
 // The SDK defaults to 10 minutes, far too long to stall a 100-job scrape on.
@@ -426,16 +426,25 @@ function salaryRange(compensation: JobFit['compensation']): string {
   return `${range} ${currency}${period}`
 }
 
+function formatRecommendation(recommendation: Recommendation): string {
+  switch (recommendation) {
+    case 'STRONG_PASS':
+      return 'Strong pass'
+    case 'PASS':
+      return 'Pass'
+    case 'HOLD':
+      return 'Hold'
+    case 'SKIP':
+      return 'Skip'
+  }
+}
+
 export function renderFitReport(result: JobFitSuccess): string[] {
   const { fit, computed } = result
   const lines = [
     '## Fit Evaluation',
     '',
-    `**${computed.recommendation} - ${computed.score}/10** | required match ${formatPct(
-      computed.requiredMatchPct,
-    )} | overall match ${formatPct(computed.overallMatchPct)}`,
-    '',
-    computed.scoreBreakdown.join('; '),
+    `**${formatRecommendation(computed.recommendation)} ${computed.score}/10**`,
     '',
   ]
 
