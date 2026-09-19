@@ -22,7 +22,11 @@ fit_recommendation: STRONG_PASS
 fit_required_match: 1.00
 fit_overall_match: 0.96
 fit_primary_stack: TypeScript, Svelte
-fit_missing_skills: 
+fit_missing_skills: Go
+fit_have_skills: TypeScript, Svelte
+fit_familiar_skills: GraphQL
+fit_dont_have_skills: Go
+fit_summary: Strong fit. TypeScript and Svelte are core strengths for Greg. The role is a good match, which Greg can own end to end; highlight AI tools that Greg should mention as part of his modern workflow.
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-12T12:00:00.000Z

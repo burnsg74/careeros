@@ -7,7 +7,16 @@ export type JobSummary = {
   company: string
   compensation: string
   locations: string
+  remote: string
+  posted_at: string
+  company_url: string
   fit_overall_match: string
+  fit_recommendation: string
+  fit_score: string
+  fit_summary: string
+  fit_have_skills: string
+  fit_familiar_skills: string
+  fit_dont_have_skills: string
   captured_at: string
   status: JobStatus
   url: string
@@ -29,7 +38,16 @@ export function jobToSummary(job: JobDetail): JobSummary {
     company: job.company,
     compensation: job.compensation,
     locations: job.locations,
+    remote: job.remote,
+    posted_at: job.posted_at,
+    company_url: job.company_url,
     fit_overall_match: job.fit_overall_match,
+    fit_recommendation: job.fit_recommendation,
+    fit_score: job.fit_score,
+    fit_summary: job.fit_summary,
+    fit_have_skills: job.fit_have_skills,
+    fit_familiar_skills: job.fit_familiar_skills,
+    fit_dont_have_skills: job.fit_dont_have_skills,
     captured_at: job.captured_at,
     status: job.status,
     url: job.url,

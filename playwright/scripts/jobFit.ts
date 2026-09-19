@@ -383,6 +383,10 @@ export function fitFrontmatterEntries(
     ['fit_overall_match', computed.overallMatchPct.toFixed(2)],
     ['fit_primary_stack', fit.primaryStack.join(', ')],
     ['fit_missing_skills', computed.missingRequiredSkills.join(', ')],
+    ['fit_have_skills', skillNames(fit.skills, 'HAVE')],
+    ['fit_familiar_skills', skillNames(fit.skills, 'TOUCHED')],
+    ['fit_dont_have_skills', skillNames(fit.skills, 'DONT_HAVE')],
+    ['fit_summary', fit.summary.trim()],
     ['fit_early_exit', String(fit.earlyExit)],
     ['fit_model', result.model],
     ['fit_evaluated_at', result.evaluatedAt],
@@ -394,6 +398,10 @@ export function fitFrontmatterEntries(
 // ---------------------------------------------------------------------------
 // Markdown report
 // ---------------------------------------------------------------------------
+
+function skillNames(skills: FitSkill[], status: FitSkill['status']): string {
+  return skills.filter((skill) => skill.status === status).map((skill) => skill.name).join(', ')
+}
 
 function formatPct(value: number): string {
   return `${Math.round(value * 100)}%`

@@ -4,73 +4,82 @@ import { resetStores } from './bootStores'
 import Jobs from './Jobs.svelte'
 import { formatOverallMatch, type JobSummary } from './jobs'
 
+function job(overrides: Partial<JobSummary> & Pick<JobSummary, 'id' | 'name' | 'company'>): JobSummary {
+  return {
+    compensation: '',
+    locations: '',
+    remote: 'true',
+    posted_at: '',
+    company_url: '',
+    fit_overall_match: '',
+    fit_recommendation: '',
+    fit_score: '',
+    fit_summary: '',
+    fit_have_skills: '',
+    fit_familiar_skills: '',
+    fit_dont_have_skills: '',
+    captured_at: '',
+    status: 'new',
+    url: '',
+    applied_at: '',
+    deleted_reason: '',
+    skills: '',
+    ...overrides,
+  }
+}
+
 const jobs: JobSummary[] = [
-  {
+  job({
     id: '1001',
     name: 'Senior Engineer',
     company: 'Acme',
     compensation: '$150k – $180k',
     locations: 'Remote',
+    remote: 'true',
+    posted_at: '2026-09-13T12:00:00.000Z',
+    company_url: 'https://wellfound.com/company/acme',
     fit_overall_match: '0.96',
+    fit_recommendation: 'STRONG_PASS',
+    fit_score: '10',
+    fit_summary:
+      'Strong fit. TypeScript and Svelte are core strengths for Greg. The role is a good match, which Greg can own end to end; highlight AI tools that Greg should mention as part of his modern workflow.',
+    fit_have_skills: 'TypeScript, Svelte',
+    fit_familiar_skills: 'GraphQL',
+    fit_dont_have_skills: 'Go',
     captured_at: '2026-09-12T12:00:00.000Z',
-    status: 'new',
     url: 'https://example.com/job',
-    applied_at: '',
-    deleted_reason: '',
     skills: 'TypeScript, Svelte',
-  },
-  {
+  }),
+  job({
     id: '1002',
     name: 'Staff Engineer',
     company: 'Beta',
     compensation: '$200k',
     locations: 'New York',
-    fit_overall_match: '',
+    remote: 'false',
     captured_at: '2026-09-11T12:00:00.000Z',
-    status: 'new',
     url: 'https://example.com/job-2',
-    applied_at: '',
-    deleted_reason: '',
     skills: 'Ruby on Rails, Python',
-  },
-  {
+  }),
+  job({
     id: '1003',
     name: 'Engineer',
     company: 'Gamma',
     compensation: '$160k',
     locations: 'Austin',
+    remote: 'true',
     fit_overall_match: '0.80',
     captured_at: '2026-08-01T12:00:00.000Z',
     status: 'applied',
     url: 'https://example.com/job-3',
     applied_at: '2026-08-01T12:00:00.000Z',
-    deleted_reason: '',
     skills: 'Go',
-  },
+  }),
 ]
 
-const fitBody = `[Wellfound](https://example.com/job)
+const postingBody = `Acme builds widgets.
 
-## Fit Evaluation
-
-**STRONG_PASS - 10/10** | required match 100% | overall match 96%
-
-base 9 from 100% required match; +1 small team or ownership culture
-
-Strong fit. TypeScript and Svelte are core strengths for Greg. The role is a good match, which Greg can own end to end; highlight AI tools that Greg should mention as part of his modern workflow.
-
-### Skills
-
-| Skill | Requirement | Tier | Status | Note |
-| --- | --- | --- | --- | --- |
-| TypeScript | required | 1 | HAVE |  |
-| Svelte | required | 1 | HAVE |  |
-| GraphQL | nice | 3 | TOUCHED |  |
-| Go | required | 4 | DONT_HAVE |  |
-
-### Compensation
-
-- Range: $150k – $180k
+## The role
 
 Ship the **product**.
 `
@@ -85,37 +94,22 @@ function skillsLine(label: string) {
 }
 
 function jobDetail(id: string) {
-  const job = jobs.find((item) => item.id === id) ?? jobs[0]
-  if (id === '1001') {
-    return {
-      ...job,
-      properties: {
-        name: job.name,
-        company: job.company,
-        url: job.url,
-        company_url: 'https://wellfound.com/company/acme',
-        remote_locations: 'United States',
-        posted_at: '2026-09-13T12:00:00.000Z',
-        status: job.status,
-        fit_score: '10',
-        fit_recommendation: 'STRONG_PASS',
-        fit_required_match: '1.00',
-        fit_overall_match: '0.96',
-        fit_missing_skills: 'Go',
-      },
-      body: fitBody,
-      obsidianUrl: 'obsidian://open?vault=CareerOS&file=4-Jobs%2FAcme',
-    }
-  }
+  const listed = jobs.find((item) => item.id === id) ?? jobs[0]
   return {
-    ...job,
+    ...listed,
     properties: {
-      name: job.name,
-      company: job.company,
-      url: job.url,
-      status: job.status,
+      name: listed.name,
+      company: listed.company,
+      url: listed.url,
+      company_url: listed.company_url,
+      posted_at: listed.posted_at,
+      status: listed.status,
+      fit_score: listed.fit_score,
+      fit_recommendation: listed.fit_recommendation,
+      fit_required_match: listed.id === '1001' ? '1.00' : '',
+      fit_overall_match: listed.fit_overall_match,
     },
-    body: 'Ship the **product**.',
+    body: listed.id === '1001' ? postingBody : 'Ship the **product**.',
     obsidianUrl: 'obsidian://open?vault=CareerOS&file=4-Jobs%2FAcme',
   }
 }
@@ -241,7 +235,9 @@ test('renders the job list', async () => {
   expect(screen.getByRole('columnheader', { name: 'Match' })).toBeInTheDocument()
   expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument()
   expect(screen.getByText('96%')).toBeInTheDocument()
-  expect(screen.queryByText('Remote')).not.toBeInTheDocument()
+  expect(screen.queryByRole('columnheader', { name: 'Location' })).not.toBeInTheDocument()
+  expect(screen.getByRole('checkbox', { name: 'Fully remote' })).toBeChecked()
+  expect(screen.queryByText('Beta')).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.queryByRole('progressbar', { name: 'Inbox progress' })).not.toBeInTheDocument()
   expect(screen.getByRole('tab', { name: 'Inbox (2)' })).toHaveAttribute('aria-selected', 'true')
@@ -371,7 +367,7 @@ test('renders job detail content and properties', async () => {
   expect(screen.getByText('100%')).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'https://example.com/job' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Previous job' })).toBeDisabled()
-  expect(screen.getByRole('button', { name: 'Next job' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Next job' })).toBeDisabled()
   expect(screen.getByRole('link', { name: 'Open in Obsidian' })).toHaveAttribute(
     'href',
     'obsidian://open?vault=CareerOS&file=4-Jobs%2FAcme',
@@ -387,7 +383,7 @@ test('edits and saves job markdown', async () => {
   await fireEvent.click(screen.getByRole('button', { name: 'Edit markdown' }))
 
   const editor = screen.getByRole('textbox', { name: 'Markdown' })
-  expect(editor).toHaveValue(fitBody)
+  expect(editor).toHaveValue(postingBody)
   await fireEvent.input(editor, { target: { value: 'Updated **role**.' } })
   await fireEvent.click(screen.getByRole('button', { name: 'Save markdown' }))
 
@@ -415,10 +411,43 @@ test('switching stage from detail opens the first job in that stage', async () =
   push.mockRestore()
 })
 
+test('filters the inbox by remote, match, skills, and pay', async () => {
+  render(Jobs, { props: { path: '/jobs' } })
+
+  expect(await screen.findByText('Acme')).toBeInTheDocument()
+  expect(screen.queryByText('Beta')).not.toBeInTheDocument()
+
+  await fireEvent.click(screen.getByRole('checkbox', { name: 'Fully remote' }))
+  expect(screen.getByText('Beta')).toBeInTheDocument()
+
+  await fireEvent.input(screen.getByRole('spinbutton', { name: 'Min match %' }), { target: { value: '90' } })
+  expect(screen.queryByText('Beta')).not.toBeInTheDocument()
+  expect(screen.getByText('Acme')).toBeInTheDocument()
+
+  await fireEvent.input(screen.getByRole('spinbutton', { name: 'Min match %' }), { target: { value: '' } })
+  await fireEvent.input(screen.getByRole('searchbox', { name: 'Skills' }), { target: { value: 'Rails' } })
+  expect(screen.queryByText('Acme')).not.toBeInTheDocument()
+  expect(screen.getByText('Beta')).toBeInTheDocument()
+
+  await fireEvent.input(screen.getByRole('searchbox', { name: 'Skills' }), { target: { value: '' } })
+  await fireEvent.input(screen.getByRole('spinbutton', { name: 'Min pay ($k)' }), { target: { value: '190' } })
+  expect(screen.queryByText('Acme')).not.toBeInTheDocument()
+  expect(screen.getByText('Beta')).toBeInTheDocument()
+
+  await fireEvent.input(screen.getByRole('spinbutton', { name: 'Min pay ($k)' }), { target: { value: '250' } })
+  expect(screen.getByText('No jobs match these filters.')).toBeInTheDocument()
+})
+
 test('detail shortcuts move between jobs and apply or delete the current one', async () => {
   const push = vi.spyOn(history, 'pushState')
-  const view = render(Jobs, { props: { path: '/jobs/1001' } })
+  const view = render(Jobs, { props: { path: '/jobs' } })
 
+  expect(await screen.findByText('Acme')).toBeInTheDocument()
+  await fireEvent.click(screen.getByRole('checkbox', { name: 'Fully remote' }))
+  await fireEvent.click(screen.getByRole('button', { name: 'Acme' }))
+  expect(push).toHaveBeenCalledWith({}, '', '/jobs/1001')
+
+  await view.rerender({ path: '/jobs/1001' })
   expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Apply' })).toHaveAttribute('aria-keyshortcuts', 'a')
   expect(screen.getByRole('button', { name: 'Delete' })).toHaveAttribute('aria-keyshortcuts', 'd')

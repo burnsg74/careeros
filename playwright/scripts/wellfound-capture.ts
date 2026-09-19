@@ -7,7 +7,6 @@ import { chromium, type Browser, type Page, type Response } from 'playwright'
 import {
   createJobFitScorer,
   fitFrontmatterEntries,
-  renderFitReport,
   type JobFitResult,
   type JobFitScorer,
   type FitErrorSlug,
@@ -581,11 +580,7 @@ function toMarkdown(
     lines.push(`${key}: ${yamlScalar(value)}`)
   }
   lines.push('---', '')
-  if (evaluation?.ok) {
-    lines.push(...renderFitReport(evaluation))
-  }
   if (listing.description?.trim()) {
-    if (evaluation?.ok) lines.push('---', '')
     lines.push(listing.description.trim(), '')
   }
   return lines.join('\n')

@@ -5,6 +5,7 @@
   import EditorControls from './EditorControls.svelte'
   import MarkdownEditor from './MarkdownEditor.svelte'
   import { formatOverallMatch, type JobDetail, type JobSummary } from './jobs'
+  import { DEFAULT_JOB_FILTERS, jobMatchesFilters } from './jobFilters'
   import { jobsStore } from './jobsStore.svelte'
   import {
     isStaleApplied,
@@ -37,6 +38,10 @@
   let deleteJobId = $state<string | null>(null)
   let deleteFromDetail = $state(false)
   let propertiesOpen = $state(readFlag(PROPERTIES_OPEN_KEY, false))
+  let minMatchPct = $state<number | undefined>(undefined)
+  let fullyRemote = $state(DEFAULT_JOB_FILTERS.fullyRemote)
+  let skillQuery = $state('')
+  let minCompensationK = $state<number | undefined>(undefined)
 
   const jobId = $derived(parseJobId(path))
   const jobs = $derived(jobsStore.list)
@@ -46,7 +51,14 @@
   const detailError = $derived(jobId ? jobsStore.detailError(jobId) : null)
   const detailLoading = $derived(jobId ? jobsStore.isDetailLoading(jobId) : false)
   const isDetail = $derived(jobId !== null)
-  const filteredJobs = $derived(jobs.filter((job) => jobMatchesStage(job.status, stage)))
+  const listFilters = $derived({
+    minMatchPct: minMatchPct ?? null,
+    fullyRemote,
+    skills: skillQuery,
+    minCompensationK: minCompensationK ?? null,
+  })
+  const stageJobs = $derived(jobs.filter((job) => jobMatchesStage(job.status, stage)))
+  const filteredJobs = $derived(stageJobs.filter((job) => jobMatchesFilters(job, listFilters)))
   const stageCounts = $derived.by(() => {
     const counts = Object.fromEntries(STAGE_TABS.map((tab) => [tab.id, 0])) as Record<
       JobStageFilter,
@@ -565,14 +577,47 @@
 
   {#if !isDetail}
     <section class="list-pane">
+      <div class="list-filters">
+        <label class="filter-field">
+          Min match %
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            inputmode="numeric"
+            bind:value={minMatchPct}
+          />
+        </label>
+        <label class="filter-check">
+          <input type="checkbox" bind:checked={fullyRemote} />
+          Fully remote
+        </label>
+        <label class="filter-field grow">
+          Skills
+          <input type="search" bind:value={skillQuery} placeholder="Contains…" />
+        </label>
+        <label class="filter-field">
+          Min pay ($k)
+          <input
+            type="number"
+            min="0"
+            step="10"
+            inputmode="numeric"
+            bind:value={minCompensationK}
+          />
+        </label>
+      </div>
       {#if listLoading}
         <p class="status">Loading jobs…</p>
       {:else if listError}
         <p class="status error">{listError}</p>
       {:else if stage === 'inbox' && newCount === 0}
         <p class="status">Inbox zero. Every captured job is applied or deleted.</p>
-      {:else if filteredJobs.length === 0}
+      {:else if stageJobs.length === 0}
         <p class="status">No jobs in this stage.</p>
+      {:else if filteredJobs.length === 0}
+        <p class="status">No jobs match these filters.</p>
       {:else}
         <table class="job-list">
           <thead>
@@ -651,7 +696,7 @@
           <div class="headline">
             <div class="title-row">
               {#if view?.fitLabel}
-                <span class="fit-badge" data-fit={detail.properties.fit_recommendation ?? ''}>{view.fitLabel}</span>
+                <span class="fit-badge" data-fit={detail.fit_recommendation}>{view.fitLabel}</span>
               {/if}
               <h1>{detail.name}</h1>
               {#if view?.postingUrl}
@@ -871,6 +916,53 @@
     padding: 24px 32px;
   }
 
+  .list-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 16px;
+    margin: 0 0 20px;
+  }
+
+  .filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 650;
+    color: var(--text);
+  }
+
+  .filter-field.grow {
+    flex: 1;
+    min-width: 12rem;
+  }
+
+  .filter-field input {
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text-h);
+    font: inherit;
+    font-weight: 400;
+    font-size: 0.85rem;
+  }
+
+  .filter-field input[type='number'] {
+    width: 7rem;
+  }
+
+  .filter-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    font-size: 0.85rem;
+    color: var(--text-h);
+  }
+
   .status.error,
   .banner.error,
   .save-error {
@@ -1086,12 +1178,6 @@
   .skills-label {
     color: var(--text);
     font-weight: 600;
-  }
-
-  .location {
-    margin: 0;
-    font-size: 0.75rem;
-    color: var(--text);
   }
 
   .fit-summary {
