@@ -5,12 +5,25 @@
   import Jobs from './lib/Jobs.svelte'
   import Contacts from './lib/Contacts.svelte'
   import JobBoards from './lib/JobBoards.svelte'
-  import { bootStores } from './lib/bootStores'
+  import { bootStores, refreshStores } from './lib/bootStores'
   import { getPath, isContactsPath, isJobBoardsPath, isJobsPath } from './lib/router'
 
   let path = $state(getPath())
+  let refreshing = $state(false)
 
   bootStores()
+
+  async function refresh() {
+    if (refreshing) {
+      return
+    }
+    refreshing = true
+    try {
+      await refreshStores()
+    } finally {
+      refreshing = false
+    }
+  }
 
   onMount(() => {
     // #region agent log
@@ -24,7 +37,7 @@
   })
 </script>
 
-<Layout>
+<Layout onrefresh={refresh} {refreshing}>
   {#if isJobsPath(path)}
     <Jobs {path} />
   {:else if isContactsPath(path)}

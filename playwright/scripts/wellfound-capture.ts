@@ -557,7 +557,6 @@ function toMarkdown(
   const skills = joinNames(listing.skills)
   const locations = joinNames(listing.locationNames)
   const remoteLocations = joinNames(listing.acceptedRemoteLocationNames)
-  const perks = listing.startup?.perks ?? []
   const lines = [
     '---',
     `note_type: Job`,
@@ -581,33 +580,12 @@ function toMarkdown(
   for (const [key, value] of fitFrontmatterEntries(evaluation)) {
     lines.push(`${key}: ${yamlScalar(value)}`)
   }
-  lines.push('---', '', `[Wellfound](${jobUrl})`, '')
+  lines.push('---', '')
   if (evaluation?.ok) {
     lines.push(...renderFitReport(evaluation))
   }
-  if (listing.startup?.highConcept) {
-    lines.push(listing.startup.highConcept, '')
-  }
-  if (companyUrl) {
-    lines.push(`[${company}](${companyUrl})`, '')
-  }
-  if (locations || remoteLocations) {
-    lines.push('## Locations', '')
-    if (locations) lines.push(`- ${locations}`)
-    if (remoteLocations) lines.push(`- Remote: ${remoteLocations}`)
-    lines.push('')
-  }
-  if (perks.length) {
-    lines.push('## Perks', '')
-    for (const perk of perks) {
-      const perkTitle = perk.title?.trim()
-      const perkDesc = perk.description?.trim()
-      if (!perkTitle && !perkDesc) continue
-      lines.push(perkDesc && perkTitle ? `- **${perkTitle}** — ${perkDesc}` : `- ${perkTitle || perkDesc}`)
-    }
-    lines.push('')
-  }
   if (listing.description?.trim()) {
+    if (evaluation?.ok) lines.push('---', '')
     lines.push(listing.description.trim(), '')
   }
   return lines.join('\n')

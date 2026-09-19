@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { resetStores } from './bootStores'
+import { refreshStores, resetStores } from './bootStores'
 import { jobsStore } from './jobsStore.svelte'
 import type { JobSummary } from './jobs'
 
@@ -10,6 +10,7 @@ const jobs: JobSummary[] = [
     company: 'Acme',
     compensation: '$150k',
     locations: 'Remote',
+    fit_overall_match: '',
     captured_at: '2026-09-12T12:00:00.000Z',
     status: 'new',
     url: 'https://example.com/job',
@@ -75,4 +76,52 @@ test('patchStatus updates the store before the API resolves', async () => {
 
   expect(jobsStore.list[0]?.status).toBe('applied')
   expect(jobsStore.list[0]?.applied_at).toBe('2026-09-12T13:00:00.000Z')
+})
+
+test('refreshStores clears cached details then reloads lists', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/jobs') {
+        return { ok: true, status: 200, json: async () => jobs }
+      }
+      if (url === '/api/jobs/1001') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ...jobs[0],
+            body: 'Cached body',
+            properties: {},
+            obsidianUrl: 'obsidian://open',
+          }),
+        }
+      }
+      if (url === '/api/contacts' || url === '/api/job-boards') {
+        return { ok: true, status: 200, json: async () => [] }
+      }
+      return { ok: false, status: 404, json: async () => ({}) }
+    }),
+  )
+
+  await jobsStore.start()
+  await jobsStore.ensureDetail('1001')
+  expect(jobsStore.getDetail('1001')?.body).toBe('Cached body')
+
+  vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+    const url = String(input)
+    if (url === '/api/jobs') {
+      return { ok: true, status: 200, json: async () => [{ ...jobs[0], name: 'Updated Engineer' }] }
+    }
+    if (url === '/api/contacts' || url === '/api/job-boards') {
+      return { ok: true, status: 200, json: async () => [] }
+    }
+    return { ok: false, status: 404, json: async () => ({}) }
+  })
+
+  await refreshStores()
+
+  expect(jobsStore.getDetail('1001')).toBeUndefined()
+  expect(jobsStore.list[0]?.name).toBe('Updated Engineer')
 })

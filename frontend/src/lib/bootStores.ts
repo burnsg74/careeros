@@ -13,3 +13,8 @@ export function resetStores() {
   contactsStore.reset()
   jobBoardsStore.reset()
 }
+
+export function refreshStores(): Promise<void> {
+  resetStores()
+  return Promise.all([jobsStore.start(), contactsStore.start(), jobBoardsStore.start()]).then(() => undefined)
+}

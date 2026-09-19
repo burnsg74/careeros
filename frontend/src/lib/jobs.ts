@@ -7,6 +7,7 @@ export type JobSummary = {
   company: string
   compensation: string
   locations: string
+  fit_overall_match: string
   captured_at: string
   status: JobStatus
   url: string
@@ -28,6 +29,7 @@ export function jobToSummary(job: JobDetail): JobSummary {
     company: job.company,
     compensation: job.compensation,
     locations: job.locations,
+    fit_overall_match: job.fit_overall_match,
     captured_at: job.captured_at,
     status: job.status,
     url: job.url,
@@ -35,6 +37,18 @@ export function jobToSummary(job: JobDetail): JobSummary {
     deleted_reason: job.deleted_reason,
     skills: job.skills,
   }
+}
+
+export function formatOverallMatch(value: string | undefined): string {
+  const raw = value?.trim() ?? ''
+  if (!raw) {
+    return '—'
+  }
+  const n = Number(raw)
+  if (!Number.isFinite(n)) {
+    return raw
+  }
+  return `${Math.round(n)}%`
 }
 
 export async function fetchJobs(): Promise<JobSummary[]> {

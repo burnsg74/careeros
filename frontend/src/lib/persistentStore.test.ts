@@ -72,6 +72,33 @@ test('coalesces rapid writes into one localStorage snapshot', async () => {
   setItem.mockRestore()
 })
 
+test('reset clears localStorage and ignores a late remote load', async () => {
+  localStorage.setItem(KEY, JSON.stringify({ v: 1, data: { name: 'cached' } }))
+  let resolveLoad: (value: { name: string }) => void = () => {}
+  const load = vi.fn(
+    () =>
+      new Promise<{ name: string }>((resolve) => {
+        resolveLoad = resolve
+      }),
+  )
+  const store = createPersistentStore({ key: KEY, initial: { name: 'initial' }, load })
+  const started = store.start()
+  await microtasks(4)
+
+  store.reset()
+
+  expect(store.value).toEqual({ name: 'initial' })
+  expect(store.status).toBe('idle')
+  expect(localStorage.getItem(KEY)).toBeNull()
+
+  resolveLoad({ name: 'stale' })
+  await started
+
+  expect(store.value).toEqual({ name: 'initial' })
+  expect(store.status).toBe('idle')
+  expect(localStorage.getItem(KEY)).toBeNull()
+})
+
 test('load refreshes cached data in the background', async () => {
   localStorage.setItem(KEY, JSON.stringify({ v: 1, data: { name: 'cached' } }))
   let resolveLoad: (value: { name: string }) => void = () => {}

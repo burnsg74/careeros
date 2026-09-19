@@ -33,6 +33,7 @@
 
   $effect(() => {
     const id = contactId
+    void contactsStore.epoch
     if (!id) {
       editing = false
       saveError = null

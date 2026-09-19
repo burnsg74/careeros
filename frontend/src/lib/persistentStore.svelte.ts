@@ -18,6 +18,7 @@ export class PersistentStore<T> {
   value = $state.raw<T>(undefined as T)
   status = $state<PersistStatus>('idle')
   error = $state<string | null>(null)
+  epoch = $state(0)
 
   private readonly key: string
   private readonly version: number
@@ -52,14 +53,21 @@ export class PersistentStore<T> {
   }
 
   reset() {
+    this.epoch += 1
     this.hydratePromise = null
     this.writeQueued = false
     this.value = structuredClone(this.initial)
     this.status = 'idle'
     this.error = null
+    try {
+      localStorage.removeItem(this.key)
+    } catch {
+      // ignore private-mode failures
+    }
   }
 
   private async hydrate() {
+    const epoch = this.epoch
     this.status = 'hydrating'
     let hadCache = false
 
@@ -83,6 +91,10 @@ export class PersistentStore<T> {
       this.error = 'Could not read saved data'
     }
 
+    if (epoch !== this.epoch) {
+      return
+    }
+
     if (!this.loadRemote) {
       this.status = hadCache || !this.error ? 'ready' : 'error'
       return
@@ -90,11 +102,17 @@ export class PersistentStore<T> {
 
     try {
       const remote = await this.loadRemote()
+      if (epoch !== this.epoch) {
+        return
+      }
       this.value = remote
       this.error = null
       this.status = 'ready'
       this.queueWrite()
     } catch (err) {
+      if (epoch !== this.epoch) {
+        return
+      }
       const message = err instanceof Error ? err.message : 'Could not load data'
       this.error = message
       this.status = hadCache ? 'ready' : 'error'
@@ -105,8 +123,12 @@ export class PersistentStore<T> {
     if (this.writeQueued) {
       return
     }
+    const epoch = this.epoch
     this.writeQueued = true
     queueMicrotask(() => {
+      if (epoch !== this.epoch) {
+        return
+      }
       this.writeQueued = false
       try {
         const envelope: PersistEnvelope<T> = { v: this.version, data: this.value }

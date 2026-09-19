@@ -4,7 +4,7 @@
   import DeleteJobModal from './DeleteJobModal.svelte'
   import EditorControls from './EditorControls.svelte'
   import MarkdownEditor from './MarkdownEditor.svelte'
-  import type { JobDetail, JobSummary } from './jobs'
+  import { formatOverallMatch, type JobDetail, type JobSummary } from './jobs'
   import { jobsStore } from './jobsStore.svelte'
   import {
     isStaleApplied,
@@ -47,6 +47,20 @@
   const detailLoading = $derived(jobId ? jobsStore.isDetailLoading(jobId) : false)
   const isDetail = $derived(jobId !== null)
   const filteredJobs = $derived(jobs.filter((job) => jobMatchesStage(job.status, stage)))
+  const stageCounts = $derived.by(() => {
+    const counts = Object.fromEntries(STAGE_TABS.map((tab) => [tab.id, 0])) as Record<
+      JobStageFilter,
+      number
+    >
+    for (const job of jobs) {
+      for (const tab of STAGE_TABS) {
+        if (jobMatchesStage(job.status, tab.id)) {
+          counts[tab.id] += 1
+        }
+      }
+    }
+    return counts
+  })
   const currentIndex = $derived(jobId ? filteredJobs.findIndex((job) => job.id === jobId) : -1)
   const previousJob = $derived(currentIndex > 0 ? filteredJobs[currentIndex - 1] : null)
   const nextJob = $derived(
@@ -54,11 +68,6 @@
   )
   const detailTargetId = $derived(lastJobId ?? filteredJobs[0]?.id ?? jobs[0]?.id ?? null)
   const newCount = $derived(jobs.filter((job) => job.status === 'new').length)
-  const screenedCount = $derived(jobs.length - newCount)
-  const progressPercent = $derived(jobs.length === 0 ? 0 : Math.round((screenedCount / jobs.length) * 100))
-  const remainingLabel = $derived(
-    newCount === 1 ? '1 new remaining' : `${newCount} new remaining`,
-  )
   const deleteListedSkills = $derived(
     jobs.find((job) => job.id === deleteJobId)?.skills ?? detail?.skills ?? '',
   )
@@ -84,13 +93,15 @@
     }
   }
 
-  function toggleProperties() {
-    propertiesOpen = !propertiesOpen
-    writeFlag(PROPERTIES_OPEN_KEY, propertiesOpen)
+  function persistPropertiesOpen(event: Event) {
+    const el = event.currentTarget as HTMLDetailsElement
+    propertiesOpen = el.open
+    writeFlag(PROPERTIES_OPEN_KEY, el.open)
   }
 
   $effect(() => {
     const id = jobId
+    void jobsStore.epoch
     if (!id) {
       editing = false
       saveError = null
@@ -434,7 +445,7 @@
             aria-selected={stage === tab.id}
             onclick={() => selectStage(tab.id)}
           >
-            {tab.label}
+            {tab.label} ({stageCounts[tab.id]})
           </button>
         {/each}
       </div>
@@ -496,19 +507,6 @@
           oncancel={cancelEdit}
           onsave={() => void saveEdit()}
         />
-        <button
-          type="button"
-          class="icon-btn"
-          class:active={propertiesOpen}
-          aria-label={propertiesOpen ? 'Hide properties' : 'Show properties'}
-          aria-pressed={propertiesOpen}
-          onclick={toggleProperties}
-        >
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <rect x="4" y="3.5" width="12" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7" />
-            <path d="M10 3.5v13M4 8h12M4 12.5h12" fill="none" stroke="currentColor" stroke-width="1.5" />
-          </svg>
-        </button>
       {/if}
     {#if isDetail}
       <div class="nav-jobs" role="group" aria-label="Job navigation">
@@ -557,22 +555,6 @@
     </div>
   </header>
 
-  {#if !isDetail}
-    <div class="progress-row">
-      <div
-        class="progress"
-        role="progressbar"
-        aria-label="Inbox progress"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        aria-valuenow={progressPercent}
-      >
-        <div class="progress-fill" style={`width: ${progressPercent}%`}></div>
-      </div>
-      <p class="progress-label">{remainingLabel}</p>
-    </div>
-  {/if}
-
   {#if statusError && !deleteOpen}
     <p class="banner error">{statusError}</p>
   {/if}
@@ -588,17 +570,40 @@
       {:else if filteredJobs.length === 0}
         <p class="status">No jobs in this stage.</p>
       {:else}
-        <ul class="job-list">
-          {#each filteredJobs as job (job.id)}
-            <li>
-              <div class="job-row">
-                <button type="button" class="job-main" onclick={() => openJob(job.id)}>
-                  <span class="company">{job.company}</span>
-                  <span class="role">{job.name}</span>
-                  <span class="meta">{job.compensation}</span>
-                  <span class="meta">{job.locations}</span>
-                </button>
-                <div class="row-actions">
+        <table class="job-list">
+          <thead>
+            <tr>
+              <th scope="col">Company</th>
+              <th scope="col">Role</th>
+              <th scope="col">Compensation</th>
+              <th scope="col">Match</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each filteredJobs as job (job.id)}
+              <tr class="job-row">
+                <td>
+                  <button type="button" class="job-main company" onclick={() => openJob(job.id)}>
+                    {job.company}
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="job-main role" onclick={() => openJob(job.id)}>
+                    {job.name}
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="job-main meta" onclick={() => openJob(job.id)}>
+                    {job.compensation}
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="job-main meta" onclick={() => openJob(job.id)}>
+                    {formatOverallMatch(job.fit_overall_match)}
+                  </button>
+                </td>
+                <td class="row-actions">
                   {#if stage === 'all'}
                     <span class="stage-chip">{STATUS_LABELS[job.status]}</span>
                   {/if}
@@ -628,22 +633,22 @@
                       </select>
                     </label>
                   {/if}
-                </div>
-              </div>
-            </li>
-          {/each}
-        </ul>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       {/if}
     </section>
   {:else if detail}
-    <div class="detail" class:with-properties={propertiesOpen}>
+    <div class="detail">
       <article class="content">
         <header class="article-head">
           <div class="headline">
-            {#if view?.fitLabel}
-              <span class="fit-badge" data-fit={detail.properties.fit_recommendation ?? ''}>{view.fitLabel}</span>
-            {/if}
             <div class="title-row">
+              {#if view?.fitLabel}
+                <span class="fit-badge" data-fit={detail.properties.fit_recommendation ?? ''}>{view.fitLabel}</span>
+              {/if}
               <h1>{detail.name}</h1>
               {#if view?.postingUrl}
                 <a
@@ -673,6 +678,23 @@
                   </svg>
                 </a>
               {/if}
+              <details class="frontmatter" bind:open={propertiesOpen} ontoggle={persistPropertiesOpen}>
+                <summary>Details</summary>
+                <dl>
+                  {#each Object.entries(detail.properties) as [key, value] (key)}
+                    <div class="prop">
+                      <dt>{propertyLabel(key)}</dt>
+                      <dd>
+                        {#if isUrl(value)}
+                          <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                        {:else}
+                          {value || '—'}
+                        {/if}
+                      </dd>
+                    </div>
+                  {/each}
+                </dl>
+              </details>
             </div>
             {#if view?.companyUrl}
               <a class="company-link" href={view.companyUrl} target="_blank" rel="noreferrer">{detail.company}</a>
@@ -687,9 +709,6 @@
             <p class="skills-line"><span class="skills-label">Have:</span> {view.haveCsv}</p>
             <p class="skills-line"><span class="skills-label">Familiar:</span> {view.familiarCsv}</p>
             <p class="skills-line"><span class="skills-label">Don't have:</span> {view.dontHaveCsv}</p>
-            {#if view.location}
-              <p class="location">{view.location}</p>
-            {/if}
           {/if}
         </header>
         {#if saveError}
@@ -708,25 +727,6 @@
           {/if}
         {/if}
       </article>
-      {#if propertiesOpen}
-        <aside class="properties">
-          <h2>Properties</h2>
-          <dl>
-            {#each Object.entries(detail.properties) as [key, value] (key)}
-              <div class="prop">
-                <dt>{propertyLabel(key)}</dt>
-                <dd>
-                  {#if isUrl(value)}
-                    <a href={value} target="_blank" rel="noreferrer">{value}</a>
-                  {:else}
-                    {value || '—'}
-                  {/if}
-                </dd>
-              </div>
-            {/each}
-          </dl>
-        </aside>
-      {/if}
     </div>
   {:else if detailLoading}
     <p class="status">Loading job…</p>
@@ -852,33 +852,6 @@
     cursor: not-allowed;
   }
 
-  .progress-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .progress {
-    flex: 1;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--nav-hover);
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: var(--nav-active);
-  }
-
-  .progress-label {
-    margin: 0;
-    font-size: 0.85rem;
-    white-space: nowrap;
-  }
-
   .banner {
     margin: 0;
     padding: 12px 20px;
@@ -896,20 +869,37 @@
   }
 
   .job-list {
-    list-style: none;
+    width: 100%;
+    border-collapse: collapse;
     margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--border);
   }
 
-  .job-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    width: 100%;
-    padding: 10px 4px;
+  .job-list th {
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 650;
+    color: var(--text);
+    padding: 8px 8px 8px 4px;
     border-bottom: 1px solid var(--border);
-    align-items: center;
+    white-space: nowrap;
+  }
+
+  .job-list th:last-child,
+  .job-list td:last-child {
+    text-align: right;
+    padding-right: 4px;
+  }
+
+  .job-list td {
+    padding: 6px 8px 6px 4px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .job-list td:nth-child(3),
+  .job-list td:nth-child(4),
+  .job-list td:last-child {
+    white-space: nowrap;
   }
 
   .job-row:hover {
@@ -917,9 +907,7 @@
   }
 
   .job-main {
-    display: grid;
-    grid-template-columns: minmax(8rem, 0.8fr) minmax(10rem, 1.4fr) minmax(8rem, 1fr) minmax(6rem, 0.8fr);
-    gap: 16px;
+    display: block;
     width: 100%;
     padding: 4px 0;
     border: 0;
@@ -946,6 +934,7 @@
   .row-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 4px;
   }
 
@@ -990,10 +979,6 @@
     min-height: 0;
   }
 
-  .detail.with-properties {
-    grid-template-columns: minmax(0, 1fr) 240px;
-  }
-
   .content {
     padding: 12px 20px 32px;
     width: 100%;
@@ -1014,9 +999,10 @@
   }
 
   .title-row {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 6px;
+    flex: 1 1 100%;
     min-width: 0;
   }
 
@@ -1186,25 +1172,41 @@
     background: var(--nav-bg);
   }
 
-  .properties {
-    border-left: 1px solid var(--border);
-    padding: 16px 16px 32px;
-    background: var(--nav-bg);
+  .frontmatter {
+    position: relative;
+    margin: 0 0 0 auto;
+    border: none;
+    background: transparent;
   }
 
-  .properties h2 {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin: 0 0 16px;
+  .frontmatter summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0;
+    color: var(--text-h);
+    white-space: nowrap;
   }
 
-  dl {
+  .frontmatter dl {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 10px 16px;
     margin: 0;
+    padding: 12px;
+    width: min(40rem, calc(100vw - 40px));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--nav-bg);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 12%, transparent);
   }
 
   .prop {
-    margin-bottom: 14px;
+    margin: 0;
   }
 
   dt {
@@ -1220,7 +1222,7 @@
     overflow-wrap: anywhere;
   }
 
-  .properties a {
+  .frontmatter a {
     color: inherit;
   }
 </style>

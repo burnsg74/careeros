@@ -33,6 +33,7 @@
 
   $effect(() => {
     const id = boardId
+    void jobBoardsStore.epoch
     if (!id) {
       editing = false
       saveError = null

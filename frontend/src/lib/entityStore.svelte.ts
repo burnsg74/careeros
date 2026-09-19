@@ -62,6 +62,10 @@ export class EntityStore<S extends { id: string }, D extends S> {
     return this.persist.status
   }
 
+  get epoch(): number {
+    return this.persist.epoch
+  }
+
   get error(): string | null {
     if (this.list.length > 0) {
       return null

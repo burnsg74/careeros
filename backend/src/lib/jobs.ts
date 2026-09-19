@@ -20,6 +20,7 @@ export type JobSummary = {
   company: string
   compensation: string
   locations: string
+  fit_overall_match: string
   captured_at: string
   status: JobStatus
   url: string
@@ -58,6 +59,7 @@ function toSummary(filename: string, properties: Record<string, string>): JobSum
     company: properties.company ?? '',
     compensation: properties.compensation ?? '',
     locations: properties.locations ?? '',
+    fit_overall_match: properties.fit_overall_match ?? '',
     captured_at: properties.captured_at ?? '',
     status: normalizeJobStatus(properties.status),
     url: properties.url ?? '',

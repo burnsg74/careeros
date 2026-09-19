@@ -66,6 +66,7 @@ function detail(overrides: Partial<JobDetail> = {}): JobDetail {
     company: 'nOps',
     compensation: '$150k – $200k',
     locations: 'Boston, Chicago, New York City, United States',
+    fit_overall_match: '96.00',
     captured_at: '2026-09-17T13:26:09.717Z',
     status: 'new',
     url: 'https://wellfound.com/jobs/4365677-senior-full-stack-engineer',

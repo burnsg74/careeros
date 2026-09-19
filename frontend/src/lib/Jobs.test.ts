@@ -11,6 +11,7 @@ const jobs: JobSummary[] = [
     company: 'Acme',
     compensation: '$150k – $180k',
     locations: 'Remote',
+    fit_overall_match: '96.00',
     captured_at: '2026-09-12T12:00:00.000Z',
     status: 'new',
     url: 'https://example.com/job',
@@ -24,6 +25,7 @@ const jobs: JobSummary[] = [
     company: 'Beta',
     compensation: '$200k',
     locations: 'New York',
+    fit_overall_match: '',
     captured_at: '2026-09-11T12:00:00.000Z',
     status: 'new',
     url: 'https://example.com/job-2',
@@ -37,6 +39,7 @@ const jobs: JobSummary[] = [
     company: 'Gamma',
     compensation: '$160k',
     locations: 'Austin',
+    fit_overall_match: '80',
     captured_at: '2026-08-01T12:00:00.000Z',
     status: 'applied',
     url: 'https://example.com/job-3',
@@ -217,8 +220,18 @@ test('renders the job list', async () => {
 
   expect(await screen.findByText('Acme')).toBeInTheDocument()
   expect(screen.getByText('Senior Engineer')).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Company' })).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Role' })).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Compensation' })).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Match' })).toBeInTheDocument()
+  expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument()
+  expect(screen.getByText('96%')).toBeInTheDocument()
+  expect(screen.queryByText('Remote')).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute('aria-pressed', 'true')
-  expect(screen.getByText('2 new remaining')).toBeInTheDocument()
+  expect(screen.queryByRole('progressbar', { name: 'Inbox progress' })).not.toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'Inbox (2)' })).toHaveAttribute('aria-selected', 'true')
+  expect(screen.getByRole('tab', { name: 'Applied (1)' })).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'All (3)' })).toBeInTheDocument()
   expect(screen.queryByText('Gamma')).not.toBeInTheDocument()
 })
 
@@ -226,7 +239,7 @@ test('filters applied jobs and flags stale applications', async () => {
   render(Jobs, { props: { path: '/jobs' } })
 
   expect(await screen.findByText('Acme')).toBeInTheDocument()
-  await fireEvent.click(screen.getByRole('tab', { name: 'Applied' }))
+  await fireEvent.click(screen.getByRole('tab', { name: 'Applied (1)' }))
 
   expect(screen.getByText('Gamma')).toBeInTheDocument()
   expect(screen.queryByText('Acme')).not.toBeInTheDocument()
@@ -251,7 +264,6 @@ test('applies a job from the inbox', async () => {
   })
   expect(window.open).toHaveBeenCalledWith('https://example.com/job', '_blank', 'noopener')
   expect(screen.queryByText('Acme')).not.toBeInTheDocument()
-  expect(screen.getByText('1 new remaining')).toBeInTheDocument()
 })
 
 test('opens a delete reason dialog', async () => {
@@ -335,13 +347,11 @@ test('renders job detail content and properties', async () => {
   expect(screen.queryByText(/required match 100%/)).not.toBeInTheDocument()
   expect(screen.getByText(/Ship the/)).toBeInTheDocument()
   expect(screen.queryByRole('progressbar', { name: 'Inbox progress' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('heading', { name: 'Properties', level: 2 })).not.toBeInTheDocument()
+  expect(screen.getByText('Details')).toBeInTheDocument()
 
-  await fireEvent.click(screen.getByRole('button', { name: 'Show properties' }))
+  await fireEvent.click(screen.getByText('Details'))
 
-  expect(screen.getByRole('heading', { name: 'Properties', level: 2 })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'https://example.com/job' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Hide properties' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('button', { name: 'Previous job' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Next job' })).toBeEnabled()
   expect(screen.getByRole('link', { name: 'Open in Obsidian' })).toHaveAttribute(
@@ -381,7 +391,7 @@ test('switching stage from detail opens the first job in that stage', async () =
   render(Jobs, { props: { path: '/jobs/1001' } })
 
   expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
-  await fireEvent.click(screen.getByRole('tab', { name: 'Applied' }))
+  await fireEvent.click(screen.getByRole('tab', { name: 'Applied (1)' }))
 
   expect(push).toHaveBeenCalledWith({}, '', '/jobs/1003')
   push.mockRestore()
