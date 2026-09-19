@@ -28,7 +28,7 @@ describe('GET /api/jobs', () => {
         company: 'Acme',
         compensation: '$150k – $180k',
         locations: 'Remote',
-        fit_overall_match: '',
+        fit_overall_match: '0.96',
         captured_at: '2026-09-12T12:00:00.000Z',
         status: 'new',
         url: 'https://wellfound.com/jobs/1001-senior-engineer',
@@ -65,6 +65,10 @@ describe('GET /api/jobs/:id', () => {
     expect(response.body.name).toBe('Senior Engineer')
     expect(response.body.properties.source_id).toBe('1001')
     expect(response.body.properties.remote).toBe('true')
+    expect(response.body.properties.posted_at).toBe('2026-09-07T11:24:07.000Z')
+    expect(response.body.properties.fit_overall_match).toBe('0.96')
+    expect(response.body.properties.fit_early_exit).toBe('false')
+    expect(response.body.fit_overall_match).toBe('0.96')
     expect(response.body.body).toContain('Ship the product.')
     expect(response.body.obsidianUrl).toBe(
       `obsidian://open?vault=fixtures&file=${encodeURIComponent('4-Jobs/Acme — Senior Engineer (1001)')}`,

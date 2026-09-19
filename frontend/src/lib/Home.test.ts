@@ -11,7 +11,7 @@ const jobs: JobSummary[] = [
     company: 'Acme',
     compensation: '$150k',
     locations: 'Remote',
-    fit_overall_match: '96',
+    fit_overall_match: '0.96',
     captured_at: '2026-09-12T12:00:00.000Z',
     status: 'new',
     url: 'https://example.com/job',

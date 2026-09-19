@@ -29,6 +29,38 @@ Updated **notes**.
   })
 })
 
+describe('parseNote', () => {
+  it('stringifies numeric, boolean, and empty job YAML fields', () => {
+    const raw = `---
+note_type: Job
+source_id: "2776321"
+remote: true
+experience_min: 5
+fit_overall_match: 0.46
+fit_early_exit: true
+deleted_reason: role_mismatch
+deleted_reason_other: 
+missing_skills: 
+posted_at: 2026-09-07T11:24:07.000Z
+---
+
+## Fit Evaluation
+`
+
+    expect(parseNote(raw).properties).toMatchObject({
+      source_id: '2776321',
+      remote: 'true',
+      experience_min: '5',
+      fit_overall_match: '0.46',
+      fit_early_exit: 'true',
+      deleted_reason: 'role_mismatch',
+      deleted_reason_other: '',
+      missing_skills: '',
+      posted_at: '2026-09-07T11:24:07.000Z',
+    })
+  })
+})
+
 describe('upsertFrontmatter', () => {
   it('replaces existing keys and appends new ones', () => {
     const raw = `---
