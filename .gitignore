@@ -11,3 +11,5 @@ playwright/captures/
 playwright/test-results/
 playwright/playwright-report/
 backend/tests/fixtures/.tmp/
+data/.obsidian/workspace.json
+data/.obsidian/workspace-mobile.json

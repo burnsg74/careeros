@@ -1,7 +1,10 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-export function resolveDataDir(raw = process.env.DATA_DIR): {
+const defaultDataDir = resolve(fileURLToPath(new URL('../../../data', import.meta.url)))
+
+export function resolveDataDir(raw = process.env.DATA_DIR ?? defaultDataDir): {
   dataDir: string | null
   exists: boolean
 } {

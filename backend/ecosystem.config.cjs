@@ -8,7 +8,8 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3005,
-        DATA_DIR: '/Users/greg/Notebooks/CareerOS',
+        DATA_DIR: '/Users/greg/Code/Local/careeros/data',
+        OBSIDIAN_VAULT_NAME: 'CareerOS',
       },
     },
   ],

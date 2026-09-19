@@ -33,9 +33,11 @@ const USER_DATA_DIR =
   process.env.WELLFOUND_CHROME_USER_DATA_DIR ??
   path.join(process.env.HOME ?? '', 'Library/Application Support/Google/Chrome-Remote')
 const KEEP_USER_DATA_DIR = process.env.WELLFOUND_KEEP_USER_DATA_DIR === '1'
+const defaultDataDir =
+  process.env.DATA_DIR ??
+  path.resolve(fileURLToPath(new URL('../..', import.meta.url)), 'data')
 const JOBS_VAULT_DIR =
-  process.env.WELLFOUND_JOBS_DIR ??
-  path.join(process.env.HOME ?? '', 'Notebooks/CareerOS/4-Jobs')
+  process.env.WELLFOUND_JOBS_DIR ?? path.join(defaultDataDir, '4-Jobs')
 
 const SENSITIVE_HEADER = /^(cookie|set-cookie|authorization|x-csrf-token|csrf-token)$/i
 const SKIP_PROFILE_NAMES = new Set([

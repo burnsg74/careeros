@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 
@@ -16,9 +17,12 @@ const SKILLS_THRESHOLD = 0.7
 const HIGH_COMP_ANNUAL = 100_000
 const EVIDENCE_LIMIT = 300
 
+const defaultDataDir =
+  process.env.DATA_DIR ??
+  path.resolve(fileURLToPath(new URL('../..', import.meta.url)), 'data')
 const PROMPT_FILE =
   process.env.WELLFOUND_PROMPT_FILE ??
-  path.join(process.env.HOME ?? '', 'Notebooks/CareerOS/8-Prompts/evaluate-job-fit.md')
+  path.join(defaultDataDir, '8-Prompts/evaluate-job-fit.md')
 const USER_TURN_HEADING = /^# USER TURN TEMPLATE[ \t]*$/m
 const POSTING_PLACEHOLDER = '{{POSTING_MARKDOWN}}'
 

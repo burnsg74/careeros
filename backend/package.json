@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "pm2 start ecosystem.config.cjs",
-    "dev": "PORT=3005 DATA_DIR=/Users/greg/Notebooks/CareerOS tsx watch src/index.ts",
+    "dev": "PORT=3005 DATA_DIR=/Users/greg/Code/Local/careeros/data OBSIDIAN_VAULT_NAME=CareerOS tsx watch src/index.ts",
     "test": "vitest run"
   },
   "dependencies": {
