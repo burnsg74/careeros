@@ -16,6 +16,7 @@ export type JobDetailView = {
   location: string
   companyUrl: string
   postingUrl: string
+  postedAt: string
 }
 
 const EMPTY = '—'
@@ -35,6 +36,43 @@ const BREAKDOWN_LINE = /^(base \d+ from |The model exited early)/i
 
 export function csvOrDash(items: string[]): string {
   return items.length > 0 ? items.join(', ') : EMPTY
+}
+
+const RELATIVE_TIME = new Intl.RelativeTimeFormat('en', { numeric: 'always' })
+const POSTED_DATE = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+const RELATIVE_UNITS: { unit: Intl.RelativeTimeFormatUnit; seconds: number }[] = [
+  { unit: 'year', seconds: 365 * 24 * 60 * 60 },
+  { unit: 'month', seconds: 30 * 24 * 60 * 60 },
+  { unit: 'day', seconds: 24 * 60 * 60 },
+  { unit: 'hour', seconds: 60 * 60 },
+  { unit: 'minute', seconds: 60 },
+]
+
+export function formatPostedAt(iso: string, now = Date.now()): string {
+  const then = Date.parse(iso)
+  if (!Number.isFinite(then)) {
+    return ''
+  }
+
+  const date = POSTED_DATE.format(then)
+  const deltaSeconds = Math.round((then - now) / 1000)
+  const abs = Math.abs(deltaSeconds)
+  if (abs < 45) {
+    return `${date} (just now)`
+  }
+
+  for (const { unit, seconds } of RELATIVE_UNITS) {
+    if (abs >= seconds || unit === 'minute') {
+      return `${date} (${RELATIVE_TIME.format(Math.round(deltaSeconds / seconds), unit)})`
+    }
+  }
+
+  return date
 }
 
 export function parseCsvList(value: string): string[] {
@@ -195,6 +233,7 @@ export function buildJobDetailView(detail: JobDetail): JobDetailView {
     location: compactLocation(detail.locations, detail.properties.remote_locations ?? ''),
     companyUrl: detail.properties.company_url ?? '',
     postingUrl: detail.properties.url || detail.url,
+    postedAt: formatPostedAt(detail.properties.posted_at ?? ''),
   }
 }
 

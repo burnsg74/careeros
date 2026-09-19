@@ -157,6 +157,10 @@
     return value.startsWith('http://') || value.startsWith('https://')
   }
 
+  function isMatchProperty(key: string): boolean {
+    return key === 'fit_overall_match' || key === 'fit_required_match'
+  }
+
   function startEdit() {
     if (!detail) {
       return
@@ -687,6 +691,8 @@
                       <dd>
                         {#if isUrl(value)}
                           <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                        {:else if isMatchProperty(key)}
+                          {formatOverallMatch(value)}
                         {:else}
                           {value || '—'}
                         {/if}
@@ -703,6 +709,9 @@
             {/if}
             {#if detail.compensation}
               <span class="comp">{detail.compensation}</span>
+            {/if}
+            {#if view?.postedAt}
+              <span class="posted">Date Posted: {view.postedAt}</span>
             {/if}
           </div>
           {#if view}
@@ -1060,6 +1069,11 @@
   .comp {
     color: var(--text-h);
     font-weight: 500;
+  }
+
+  .posted {
+    color: var(--text);
+    font-size: 0.88rem;
   }
 
   .skills-line {

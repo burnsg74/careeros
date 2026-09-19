@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/sve
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { resetStores } from './bootStores'
 import Jobs from './Jobs.svelte'
-import type { JobSummary } from './jobs'
+import { formatOverallMatch, type JobSummary } from './jobs'
 
 const jobs: JobSummary[] = [
   {
@@ -11,7 +11,7 @@ const jobs: JobSummary[] = [
     company: 'Acme',
     compensation: '$150k – $180k',
     locations: 'Remote',
-    fit_overall_match: '96.00',
+    fit_overall_match: '0.96',
     captured_at: '2026-09-12T12:00:00.000Z',
     status: 'new',
     url: 'https://example.com/job',
@@ -39,7 +39,7 @@ const jobs: JobSummary[] = [
     company: 'Gamma',
     compensation: '$160k',
     locations: 'Austin',
-    fit_overall_match: '80',
+    fit_overall_match: '0.80',
     captured_at: '2026-08-01T12:00:00.000Z',
     status: 'applied',
     url: 'https://example.com/job-3',
@@ -95,9 +95,12 @@ function jobDetail(id: string) {
         url: job.url,
         company_url: 'https://wellfound.com/company/acme',
         remote_locations: 'United States',
+        posted_at: '2026-09-13T12:00:00.000Z',
         status: job.status,
         fit_score: '10',
         fit_recommendation: 'STRONG_PASS',
+        fit_required_match: '1.00',
+        fit_overall_match: '0.96',
         fit_missing_skills: 'Go',
       },
       body: fitBody,
@@ -120,6 +123,8 @@ function jobDetail(id: string) {
 beforeEach(() => {
   resetStores()
   localStorage.clear()
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-18T12:00:00.000Z'))
   vi.stubGlobal('open', vi.fn())
   vi.stubGlobal(
     'fetch',
@@ -188,7 +193,17 @@ afterEach(() => {
     deleted_reason: '',
   }
   localStorage.clear()
+  vi.useRealTimers()
   vi.unstubAllGlobals()
+})
+
+test('formats YAML fit ratios and legacy percentage values', () => {
+  expect(formatOverallMatch('0.96')).toBe('96%')
+  expect(formatOverallMatch('0.46')).toBe('46%')
+  expect(formatOverallMatch('1.00')).toBe('100%')
+  expect(formatOverallMatch('0')).toBe('0%')
+  expect(formatOverallMatch('96.00')).toBe('96%')
+  expect(formatOverallMatch('')).toBe('—')
 })
 
 test('renders cached jobs without waiting on the network', async () => {
@@ -338,6 +353,7 @@ test('renders job detail content and properties', async () => {
     'https://wellfound.com/company/acme',
   )
   expect(screen.getByText('$150k – $180k')).toBeInTheDocument()
+  expect(screen.getByText('Date Posted: Sep 13, 2026 (5 days ago)')).toBeInTheDocument()
   expect(screen.getByText('Strong pass 10/10')).toBeInTheDocument()
   expect(skillsLine('Have:')).toHaveTextContent('Have: TypeScript, Svelte')
   expect(skillsLine('Familiar:')).toHaveTextContent('Familiar: GraphQL')
@@ -351,6 +367,8 @@ test('renders job detail content and properties', async () => {
 
   await fireEvent.click(screen.getByText('Details'))
 
+  expect(screen.getByText('96%')).toBeInTheDocument()
+  expect(screen.getByText('100%')).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'https://example.com/job' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Previous job' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Next job' })).toBeEnabled()

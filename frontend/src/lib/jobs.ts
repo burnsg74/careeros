@@ -48,7 +48,8 @@ export function formatOverallMatch(value: string | undefined): string {
   if (!Number.isFinite(n)) {
     return raw
   }
-  return `${Math.round(n)}%`
+  const percent = n >= 0 && n <= 1 ? n * 100 : n
+  return `${Math.round(percent)}%`
 }
 
 export async function fetchJobs(): Promise<JobSummary[]> {

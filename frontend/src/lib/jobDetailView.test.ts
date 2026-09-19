@@ -5,6 +5,7 @@ import {
   csvOrDash,
   extractFitSummary,
   formatFitLabel,
+  formatPostedAt,
   parseSkillsTable,
   splitFitAndPosting,
   toSecondPerson,
@@ -15,9 +16,7 @@ const nOpsBody = `[Wellfound](https://wellfound.com/jobs/4365677-senior-full-sta
 
 ## Fit Evaluation
 
-**STRONG_PASS - 10/10** | required match 100% | overall match 96%
-
-base 9 from 100% required match; +1 small team or ownership culture; +1 full-time US remote at or above $100k
+**Strong pass 10/10**
 
 Strong fit. nOps is a growth-stage FinOps platform seeking a senior full-stack engineer with deep AWS and Python expertise—all core strengths for Greg. The role emphasizes end-to-end ownership, mentoring, and infrastructure architecture, aligning perfectly with his 25+ years of experience and preference for small-team, high-agency environments. The only minor gap is Databricks (Tier 2, nice-to-have), which Greg can ramp quickly; the company explicitly values AI coding tools (Cursor, Claude) that Greg should highlight as part of his modern workflow. Compensation ($150k–$200k) and full-time US-remote status meet all hard criteria.
 
@@ -66,7 +65,7 @@ function detail(overrides: Partial<JobDetail> = {}): JobDetail {
     company: 'nOps',
     compensation: '$150k – $200k',
     locations: 'Boston, Chicago, New York City, United States',
-    fit_overall_match: '96.00',
+    fit_overall_match: '0.96',
     captured_at: '2026-09-17T13:26:09.717Z',
     status: 'new',
     url: 'https://wellfound.com/jobs/4365677-senior-full-stack-engineer',
@@ -77,6 +76,7 @@ function detail(overrides: Partial<JobDetail> = {}): JobDetail {
       url: 'https://wellfound.com/jobs/4365677-senior-full-stack-engineer',
       company_url: 'https://wellfound.com/company/nops',
       remote_locations: 'United States',
+      posted_at: '2026-09-13T12:00:00.000Z',
       fit_score: '10',
       fit_recommendation: 'STRONG_PASS',
       fit_missing_skills: '',
@@ -101,6 +101,18 @@ describe('csvOrDash', () => {
   it('joins names or uses an em dash', () => {
     expect(csvOrDash(['Python', 'AWS'])).toBe('Python, AWS')
     expect(csvOrDash([])).toBe('—')
+  })
+})
+
+describe('formatPostedAt', () => {
+  const now = Date.parse('2026-09-18T12:00:00.000Z')
+
+  it('formats a calendar date with a relative age', () => {
+    expect(formatPostedAt('2026-09-13T12:00:00.000Z', now)).toBe('Sep 13, 2026 (5 days ago)')
+  })
+
+  it('returns empty when posted_at is missing', () => {
+    expect(formatPostedAt('', now)).toBe('')
   })
 })
 
@@ -172,12 +184,59 @@ describe('buildJobDetailView', () => {
     expect(view.familiarCsv).toBe('Vercel deployment')
     expect(view.dontHaveCsv).toBe('Go')
     expect(view.location).toBe('United States')
+    expect(view.postedAt).toBe(formatPostedAt('2026-09-13T12:00:00.000Z'))
     expect(view.companyUrl).toBe('https://wellfound.com/company/nops')
     expect(view.postingUrl).toContain('wellfound.com/jobs/4365677')
     expect(view.summary).toContain('your 25+ years')
     expect(view.summary).not.toContain('Greg')
     expect(view.postingMarkdown).toContain('Automated Cloud Optimization Platform')
     expect(view.postingMarkdown).not.toContain('STRONG_PASS')
+  })
+
+  it('reads a skip evaluation written in the current YAML report format', () => {
+    const view = buildJobDetailView(
+      detail({
+        fit_overall_match: '0.46',
+        properties: {
+          url: 'https://wellfound.com/jobs/2776321',
+          company_url: 'https://wellfound.com/company/archesys',
+          remote_locations: 'United States',
+          fit_score: '0',
+          fit_recommendation: 'SKIP',
+          fit_missing_skills: '.NET, ASP.NET, Azure, Entity Framework',
+        },
+        body: `## Fit Evaluation
+
+**Skip 0/10**
+
+This role fails the hard screen on roleType due to the US citizenship requirement.
+
+The model exited early on a clear hard-criterion failure, so the skills list covers the primary stack only.
+
+### Skills
+
+| Skill | Requirement | Tier | Status | Note |
+| --- | --- | --- | --- | --- |
+| .NET | required | 4 | DONT_HAVE |  |
+| React | required | 1 | HAVE |  |
+| Next.js | required | 3 | TOUCHED |  |
+
+### Compensation
+
+- Range: 85,000 - 105,000 USD/year
+
+ArcheSys builds cloud solutions.
+`,
+      }),
+    )
+    expect(view.fitLabel).toBe('Skip 0/10')
+    expect(view.haveCsv).toBe('React')
+    expect(view.familiarCsv).toBe('Next.js')
+    expect(view.dontHaveCsv).toBe('.NET')
+    expect(view.summary).toContain('fails the hard screen')
+    expect(view.summary).not.toContain('The model exited early')
+    expect(view.postingMarkdown).toContain('ArcheSys builds cloud solutions.')
+    expect(view.postingMarkdown).not.toContain('## Fit Evaluation')
   })
 
   it('falls back to listed skills when there is no fit table', () => {
