@@ -16,8 +16,13 @@ experience_min: 2
 skills: AI, API, HubSpot, Zapier Automation, Google Suite, Xcel, Word, PPt, WordPress, Monday, Slack, Canva, AirTable, Claude, AI Tools (ChatGPT, Copilot, Gemini, Grok
 posted_at: 2026-09-11T17:18:36.000Z
 captured_at: 2026-09-19T15:15:07.559Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T18:20:31.733Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 AI Builder — Internal Tools, Automations &amp; Integrations

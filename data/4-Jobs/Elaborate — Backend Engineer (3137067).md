@@ -16,8 +16,13 @@ experience_min: 4
 skills: Python, PostgreSQL, HL7 Integration, Fhir, Semantic Interoperability (HL7, FHIR)
 posted_at: 2026-06-25T16:42:24.000Z
 captured_at: 2026-09-19T15:18:48.817Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:34:13.042Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 ***US-based applicants only. Unfortunately, our  contracts do not allow for hires outside of the United States. ***

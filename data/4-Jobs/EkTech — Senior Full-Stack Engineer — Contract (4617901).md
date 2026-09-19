@@ -16,7 +16,7 @@ experience_min: 7
 skills: Java, SQL, Databases, Full Stack Development, Rust, Kotlin, AWS
 posted_at: 2026-08-24T01:51:12.000Z
 captured_at: 2026-09-19T15:11:54.150Z
-status: new
+status: deleted
 fit_score: 9
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.80
@@ -30,6 +30,11 @@ fit_summary: You have strong full-stack depth and the core backend skills (SQL, 
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:12:05.267Z
+status_updated_at: 2026-09-19T18:07:23.564Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 EkTech is building software for public-agency property accountability and inventory workflows. We have a working Flutter proof of concept and are looking for a senior full-stack contractor to help turn it into a production-ready MVP.

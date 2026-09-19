@@ -16,8 +16,13 @@ experience_min: 2
 skills: Cloud Computing, PostgreSQL, Linux System Administration, Linux, Ubuntu, Provisioning, Embedded Linux, Ubuntu Server, Servers, Red Hat Linux, Docker, Ansible, TPM, Mesh Network, Systemd, Docker / Docker Compose / Kubernetes, Linux System Administration (RedHat, CentOS, Debian, Ubuntu, PostFix, PostgreSQL), DevOps/Linux/Docker/Jenkins/Chef/Puppet/Git, Large Language Models (LLMs), Tailscale, LLM Frameworks (Langchain, Claude, LLamaIndex) RAG Technologies Embedding Models Vect, LUKS
 posted_at: 2026-08-06T17:30:58.000Z
 captured_at: 2026-09-19T15:21:36.783Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:26:52.582Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 The Role

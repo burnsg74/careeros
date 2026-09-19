@@ -16,7 +16,7 @@ experience_min: 3
 skills: Python, AWS
 posted_at: 2026-07-10T03:33:07.000Z
 captured_at: 2026-09-19T15:19:56.296Z
-status: new
+status: applied
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 1.00
@@ -30,6 +30,12 @@ fit_summary: "You're a strong fit for this role: you have deep Python and AWS ex
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:20:07.663Z
+status_updated_at: 2026-09-19T20:19:11.590Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
+applied_at: 2026-09-19T20:19:11.590Z
 ---
 
 ### About Outlier

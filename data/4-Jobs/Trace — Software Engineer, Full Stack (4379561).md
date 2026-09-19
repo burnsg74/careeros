@@ -16,7 +16,7 @@ experience_min: 4
 skills: 
 posted_at: 2026-06-24T13:14:33.000Z
 captured_at: 2026-09-19T15:19:42.403Z
-status: new
+status: deleted
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.90
@@ -30,6 +30,11 @@ fit_summary: You're a strong fit for this early-stage, ownership-focused role at
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:19:53.931Z
+status_updated_at: 2026-09-19T17:01:16.717Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **About Trace**

@@ -16,7 +16,7 @@ experience_min: 5
 skills: Github, RDBMS, Docker, Message Queues, AWS, Kubernetes, Claude Code
 posted_at: 2026-09-16T19:49:16.000Z
 captured_at: 2026-09-19T12:45:53.745Z
-status: new
+status: deleted
 fit_score: 8
 fit_recommendation: PASS
 fit_required_match: 0.75
@@ -30,6 +30,11 @@ fit_summary: "You have strong ownership appeal here: sole DevOps engineer on a s
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T12:46:06.192Z
+status_updated_at: 2026-09-19T18:12:52.848Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 We're looking for a senior DevOps engineer to be our sole infrastructure owner — the person who keeps our platform running, scales our delivery pipeline, and responds when things go wrong in production. This isn't a role where you hand off tickets to a platform team. You'll own the infrastructure end-to-end, work closely with engineers on deployment and reliability, and be the on-call anchor for critical incidents. You're someone who combines deep technical expertise with a collaborative, process-minded approach — you keep the team in the loop, follow change control procedures, and understand that good infrastructure work is as much about communication as it is about execution.

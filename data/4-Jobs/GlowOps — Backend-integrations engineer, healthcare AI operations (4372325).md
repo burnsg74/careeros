@@ -16,8 +16,13 @@ experience_min: 3
 skills: Python, Backend Development, TypeScript, Queues, postgres, APIs, Retries
 posted_at: 2026-06-20T22:43:19.000Z
 captured_at: 2026-09-19T15:27:39.469Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:00:47.345Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 We are a stealth healthcare AI startup building the operations layer for private medical clinic groups.

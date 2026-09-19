@@ -16,7 +16,7 @@ experience_min: 5
 skills: TypeScript, Algorithms & Data Structures, Unit Testing
 posted_at: 2026-07-25T05:14:44.000Z
 captured_at: 2026-09-19T15:17:09.174Z
-status: new
+status: deleted
 fit_score: 10
 fit_recommendation: PASS
 fit_required_match: 1.00
@@ -30,6 +30,11 @@ fit_summary: "You have strong ownership of a focused, high-leverage problem—bu
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:17:16.981Z
+status_updated_at: 2026-09-19T18:21:03.621Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 Analysts using our product build audiences by stacking up nested filters, things like "country is US and (plan is Scale or seats over 10)", and they expect to undo and redo freely as they go. We're hiring a senior frontend engineer to own the engine behind that builder. It's pure TypeScript, and the React UI just renders and dispatches, so all the real logic is yours.

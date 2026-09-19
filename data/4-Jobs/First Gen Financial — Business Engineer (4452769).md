@@ -16,7 +16,7 @@ experience_min: 3
 skills: AI, Github, Zapier, Airtable, Vercel, Softr, Replit, Heroku/Netlify/Vercel/CPanel/AWS
 posted_at: 2026-07-10T12:40:40.000Z
 captured_at: 2026-09-19T15:24:22.156Z
-status: new
+status: deleted
 fit_score: 10
 fit_recommendation: PASS
 fit_required_match: 0.92
@@ -30,6 +30,11 @@ fit_summary: You meet all hard-screen criteria and have strong coverage of the p
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:24:35.240Z
+status_updated_at: 2026-09-19T17:08:19.506Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **Business Engineer — First Gen (First Gen)**

@@ -16,8 +16,13 @@ experience_min: 10
 skills: Python, Javascript, Node.js, TypeScript, Playwright
 posted_at: 2026-06-16T15:56:58.000Z
 captured_at: 2026-09-19T15:25:26.755Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:00:52.945Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 ### **About Software Velocity Corp**

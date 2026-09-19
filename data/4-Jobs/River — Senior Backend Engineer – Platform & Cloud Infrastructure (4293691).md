@@ -16,8 +16,13 @@ experience_min: 5
 skills: Javascript, SQL, Kafka, TypeScript, Docker, Rust, AWS
 posted_at: 2026-06-03T03:00:59.000Z
 captured_at: 2026-09-19T15:21:13.687Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:01:05.346Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 ## **About River**

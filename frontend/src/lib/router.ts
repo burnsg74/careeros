@@ -27,8 +27,17 @@ export function parseJobId(path: string): string | null {
   return match?.[1] ? decodeURIComponent(match[1]) : null
 }
 
+export function parseJobApplyId(path: string): string | null {
+  const match = path.match(/^\/jobs\/([^/]+)\/apply$/)
+  return match?.[1] ? decodeURIComponent(match[1]) : null
+}
+
 export function jobDetailPath(id: string): string {
   return `/jobs/${encodeURIComponent(id)}`
+}
+
+export function jobApplyPath(id: string): string {
+  return `/jobs/${encodeURIComponent(id)}/apply`
 }
 
 export function isContactsPath(path: string): boolean {

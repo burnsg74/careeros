@@ -16,7 +16,7 @@ experience_min: 6
 skills: Python, Software Architecture, Databases, Artificial Intelligence, PostgreSQL, AI, API, React.js, Vercel, LLMs
 posted_at: 2026-08-25T15:58:57.000Z
 captured_at: 2026-09-19T15:17:29.191Z
-status: new
+status: applied
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.91
@@ -30,6 +30,12 @@ fit_summary: You're a strong fit for this founding technical lead role at an ear
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:17:51.880Z
+status_updated_at: 2026-09-19T20:30:20.845Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
+applied_at: 2026-09-19T20:30:20.845Z
 ---
 
 **The Role**

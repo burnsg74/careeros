@@ -16,7 +16,7 @@ experience_min: 4
 skills: Python, PostgreSQL, Software Testing, Github, TypeScript, APIs
 posted_at: 2026-09-16T17:03:03.000Z
 captured_at: 2026-09-19T12:44:14.400Z
-status: new
+status: saved
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 1.00
@@ -30,6 +30,11 @@ fit_summary: You're a strong fit for this role. You have all the core technical 
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T12:44:24.534Z
+status_updated_at: 2026-09-19T18:14:27.551Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 We’re looking for a **Senior Software Engineer (Backend Leaning)** to join our growing team and play a key role in building our entire product platform - AI analysis systems, E-commerce platform, and reporting applications. You’ll focus on improving the performance of our AI analysis and building new features to support our clients.

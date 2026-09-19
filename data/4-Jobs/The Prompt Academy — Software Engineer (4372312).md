@@ -16,8 +16,13 @@ experience_min: 2
 skills: Python, Node.js, TypeScript, React.js, AWS, GCP, Next.Js, LLM Frameworks (Langchain, Claude, LLamaIndex) RAG Technologies Embedding Models Vect
 posted_at: 2026-08-13T19:19:32.000Z
 captured_at: 2026-09-19T15:14:44.790Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T18:21:17.108Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **Company Description**

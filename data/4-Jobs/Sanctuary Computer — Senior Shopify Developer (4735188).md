@@ -16,8 +16,13 @@ experience_min: 8
 skills: Hydrogen, Shopify, TypeScript, Shopify Theme Development, Shopify liquid, Next.Js, TailwindCSS
 posted_at: 2026-09-18T12:51:16.000Z
 captured_at: 2026-09-19T15:13:56.801Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T18:20:44.374Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 We are hiring a **contract-based Senior Shopify Developer** to contribute to our Design and Development Team.

@@ -16,7 +16,7 @@ experience_min: 10
 skills: Python, Javascript, PostgreSQL, Linux
 posted_at: 2026-08-18T00:00:00.000Z
 captured_at: 2026-09-19T12:46:20.848Z
-status: new
+status: saved
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 1.00
@@ -30,6 +30,11 @@ fit_summary: "Excellent fit. You meet all hard screens with a $250k–$300k full
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T12:46:29.609Z
+status_updated_at: 2026-09-19T18:11:20.985Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 We're looking for engineers to upgrade the patient experience.

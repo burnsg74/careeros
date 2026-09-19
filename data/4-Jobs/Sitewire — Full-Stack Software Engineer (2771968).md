@@ -16,7 +16,7 @@ experience_min: 7
 skills: PostgreSQL, TypeScript, React.js, React Native
 posted_at: 2026-08-04T19:24:55.000Z
 captured_at: 2026-09-19T15:22:47.187Z
-status: new
+status: applied
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.88
@@ -30,6 +30,12 @@ fit_summary: "You're a strong fit for this role: you have the core React and Typ
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:22:56.514Z
+status_updated_at: 2026-09-19T21:09:44.121Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
+applied_at: 2026-09-19T21:09:44.121Z
 ---
 
 Sitewire is a simple yet powerful construction finance platform that helps lenders and institutional asset managers track project progress, automate work verification, and speed up payments. The company is backed by all-star PropTech VCs, yet profitable, and expanding 3x organically per year. We're looking for a pragmatic Full-Stack Web Engineer to help us build new platform capabilities as we grow.

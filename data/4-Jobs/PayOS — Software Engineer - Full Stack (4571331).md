@@ -16,8 +16,13 @@ experience_min: 0
 skills: Python, PostgreSQL, Machine Learning Data Science Python, MERN Stack - Javascript (ES5 & ES6), MongoDB, Express.Js, React, Node.Js
 posted_at: 2026-08-09T21:48:48.000Z
 captured_at: 2026-09-19T15:21:58.862Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:24:03.754Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **The Mission**

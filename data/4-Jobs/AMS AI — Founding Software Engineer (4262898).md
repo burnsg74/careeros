@@ -16,8 +16,13 @@ experience_min: 5
 skills: Python, Javascript, TypeScript, Agentic AI
 posted_at: 2026-05-26T19:51:39.000Z
 captured_at: 2026-09-19T15:27:05.573Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:00:50.068Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **About AMS Health AI**

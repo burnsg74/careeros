@@ -16,8 +16,13 @@ experience_min: 1
 skills: Business Intelligence, Business Development, Machine Learning, Artificial Intelligence, Automation, Business Analysis, AI, Marketing Automation, Test Automation, QA Automation, Zapier, Zapier Automation, openAI, Generative AI, Workflow N8n, Claude, N8n Automation
 posted_at: 2026-06-26T00:32:07.000Z
 captured_at: 2026-09-19T15:28:05.259Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:00:00.153Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **About REWORK Digital**

@@ -16,7 +16,7 @@ experience_min: 7
 skills: PHP, Javascript, Node.js, Laravel, TypeScript, React.js, AWS
 posted_at: 2026-07-10T14:29:47.000Z
 captured_at: 2026-09-19T15:13:42.443Z
-status: new
+status: saved
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 1.00
@@ -30,6 +30,11 @@ fit_summary: "You're a strong fit for this contract role: you have all the core 
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:13:54.619Z
+status_updated_at: 2026-09-19T17:58:52.130Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 A warm hello to my fellow humans of WellFound.

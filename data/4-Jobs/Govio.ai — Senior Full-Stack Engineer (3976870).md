@@ -16,7 +16,7 @@ experience_min: 9
 skills: Python, Javascript, PostgreSQL, API, TypeScript, React.js, CICD, LLMs, Retrieval-Augmented Generation (RAG)
 posted_at: 2026-07-29T15:17:56.000Z
 captured_at: 2026-09-19T15:18:34.062Z
-status: new
+status: deleted
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.96
@@ -30,6 +30,11 @@ fit_summary: "You're a strong fit for this role: it's fully remote US-based, off
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:18:46.621Z
+status_updated_at: 2026-09-19T18:19:57.008Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 We’re hiring a Senior Full-Stack Engineer to help build and scale our AI-platform used directly by customers to solve real operational problems. You’ll work across frontend, backend, and AI systems, owning features from idea to production in a small, fast-moving team. This role is ideal for engineers who enjoy end-to-end ownership, systems thinking, and building production AI applications.

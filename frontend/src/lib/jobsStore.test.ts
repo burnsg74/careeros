@@ -87,6 +87,53 @@ test('patchStatus updates the store before the API resolves', async () => {
   expect(jobsStore.list[0]?.applied_at).toBe('2026-09-12T13:00:00.000Z')
 })
 
+test('patchStatus keeps the latest optimistic status if an earlier request fails', async () => {
+  const patches: Array<{
+    resolve: (value: { ok: boolean; status: number; json: () => Promise<unknown> }) => void
+    reject: (reason?: unknown) => void
+  }> = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url === '/api/jobs' && method === 'GET') {
+        return { ok: true, status: 200, json: async () => jobs }
+      }
+      if (url === '/api/jobs/1001/status' && method === 'PATCH') {
+        return await new Promise((resolve, reject) => {
+          patches.push({ resolve, reject })
+        })
+      }
+      return { ok: false, status: 404, json: async () => ({}) }
+    }),
+  )
+
+  await jobsStore.start()
+  const first = jobsStore.patchStatus('1001', { status: 'saved' })
+  const second = jobsStore.patchStatus('1001', { status: 'applied' })
+  expect(jobsStore.list[0]?.status).toBe('applied')
+
+  patches[0]?.reject(new Error('Could not update status'))
+  await expect(first).rejects.toThrow('Could not update status')
+  expect(jobsStore.list[0]?.status).toBe('applied')
+
+  patches[1]?.resolve({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      ...jobs[0],
+      status: 'applied',
+      applied_at: '2026-09-12T13:00:00.000Z',
+      properties: { status: 'applied' },
+      body: 'Body',
+      obsidianUrl: 'obsidian://open',
+    }),
+  })
+  await second
+  expect(jobsStore.list[0]?.status).toBe('applied')
+})
+
 test('start caches job details from the list so ensureDetail does not refetch', async () => {
   const detail: JobDetail = {
     ...jobs[0],

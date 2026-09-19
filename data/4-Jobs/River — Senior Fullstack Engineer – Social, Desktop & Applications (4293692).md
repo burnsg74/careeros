@@ -16,8 +16,13 @@ experience_min: 5
 skills: SQL, React.js, AWS, JavaScript (ES5/ES6) / TypeScript
 posted_at: 2026-06-03T03:03:04.000Z
 captured_at: 2026-09-19T15:20:50.183Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:01:06.716Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 ## **About River**

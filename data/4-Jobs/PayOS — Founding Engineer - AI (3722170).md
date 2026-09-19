@@ -16,8 +16,13 @@ experience_min: 3
 skills: Python, PostgreSQL, TypeScript, Microsoft Azure, AWS, GCP, MERN Stack - Javascript (ES5 & ES6), MongoDB, Express.Js, React, Node.Js, Generative AI, LangChain, CrewAI
 posted_at: 2026-07-21T15:29:42.000Z
 captured_at: 2026-09-19T15:22:23.250Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:13:53.121Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 PayOS | San Francisco | $130k – $170k + Significant Equity

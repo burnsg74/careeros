@@ -16,7 +16,7 @@ experience_min: 5
 skills: TypeScript, Next.Js
 posted_at: 2026-07-23T16:37:49.000Z
 captured_at: 2026-09-19T15:15:30.342Z
-status: new
+status: saved
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.93
@@ -30,6 +30,11 @@ fit_summary: You're a strong fit for this senior frontend role at a well-funded 
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:15:42.348Z
+status_updated_at: 2026-09-19T19:47:48.480Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 ## About Nivelo:

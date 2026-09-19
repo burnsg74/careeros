@@ -16,7 +16,7 @@ experience_min: 5
 skills: Software Engineering, Product Management, Databases, Customer Success, React.js, AWS, NodeJS, Generative AI, LLMs
 posted_at: 2026-09-04T02:46:41.000Z
 captured_at: 2026-09-19T15:12:59.983Z
-status: new
+status: deleted
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.80
@@ -30,6 +30,11 @@ fit_summary: "You're a strong fit for this early-stage healthcare AI role: full-
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:13:11.151Z
+status_updated_at: 2026-09-19T18:05:57.405Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **How It All Started**

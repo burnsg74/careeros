@@ -5,11 +5,13 @@
   import Jobs from './lib/Jobs.svelte'
   import Contacts from './lib/Contacts.svelte'
   import JobBoards from './lib/JobBoards.svelte'
+  import ApplicationQuestions from './lib/ApplicationQuestions.svelte'
   import { bootStores, refreshStores } from './lib/bootStores'
-  import { getPath, isContactsPath, isJobBoardsPath, isJobsPath } from './lib/router'
+  import { getPath, isContactsPath, isJobBoardsPath, isJobsPath, parseJobApplyId } from './lib/router'
 
   let path = $state(getPath())
   let refreshing = $state(false)
+  const applyJobId = $derived(parseJobApplyId(path))
 
   bootStores()
 
@@ -38,7 +40,9 @@
 </script>
 
 <Layout onrefresh={refresh} {refreshing}>
-  {#if isJobsPath(path)}
+  {#if applyJobId}
+    <ApplicationQuestions jobId={applyJobId} />
+  {:else if isJobsPath(path)}
     <Jobs {path} />
   {:else if isContactsPath(path)}
     <Contacts {path} />

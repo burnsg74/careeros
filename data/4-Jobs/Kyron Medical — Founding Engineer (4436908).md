@@ -16,8 +16,14 @@ experience_min: 0
 skills: Python, PostgreSQL, Software Testing, Amazon RDS, Flask, AWS/EC2/ELB/S3/DynamoDB, Manual Testing, Docker, Unit Testing, AWS, React Native, Next.Js, GitHub Actions, Generative AI
 posted_at: 2026-07-08T01:02:50.000Z
 captured_at: 2026-09-19T15:23:08.877Z
-status: new
+status: applied
 fit_error: parse_failed
+status_updated_at: 2026-09-19T21:05:18.578Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
+applied_at: 2026-09-19T21:05:18.578Z
 ---
 
 Kyron Medical builds AI voice agents and revenue-cycle automation for physician practices. When a patient calls their doctor's office, Kyron answers, schedules, routes, and handles the back-office billing work that normally eats a practice's staff time and margin. We're bootstrapped, profitable, and growing on contracts with health systems and physician groups rather than runway, which means every hire is deliberate and the person we bring on has genuine ownership from day one.

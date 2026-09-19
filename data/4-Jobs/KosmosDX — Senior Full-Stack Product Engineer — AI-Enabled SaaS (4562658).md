@@ -16,8 +16,13 @@ experience_min: 5
 skills: Software Development, SQL, Cloud Computing, SaaS, Automation, Full Stack Development, API, Product Design, Microsoft Azure, CI/CD, Generative AI, LLMs, Large Language Models (LLMs)
 posted_at: 2026-08-07T22:52:33.000Z
 captured_at: 2026-09-19T15:24:50.410Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:04:00.756Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **Build software that helps people make better decisions while work is happening**

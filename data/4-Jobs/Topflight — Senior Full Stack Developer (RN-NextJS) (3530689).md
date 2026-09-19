@@ -16,8 +16,13 @@ experience_min: 5
 skills: Node.js, DevOps, TypeScript, React Native, CICD, Next.Js, Azure DevOps, Supabase, Tailswind Css, Shadcn UI
 posted_at: 2026-08-30T16:26:05.000Z
 captured_at: 2026-09-19T15:16:35.301Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T18:20:17.659Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 We are Topflight Apps!, a team of innovative product managers, founders, designers, and developers. Together our mission is to build products that help millions of lives by tackling some of the biggest problems in healthcare and fintech. Our company was founded in 2017 in Irvine, California, and each year since, we have roughly doubled, reaching the $4 million revenue mark last year and raising our first seed fund as well.

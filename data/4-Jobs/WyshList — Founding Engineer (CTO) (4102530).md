@@ -16,8 +16,13 @@ experience_min: 10
 skills: Python, Software Architecture, PostgreSQL, REST APIs, TypeScript, Microsoft Azure, SDK, React.js, Terraform, DBT, Flutter, Progressive Web Apps (PWA), FastAPI, Identity and Access Management (IAM), Agentic RAG, Agentic AI
 posted_at: 2026-09-08T15:11:33.000Z
 captured_at: 2026-09-19T15:16:13.596Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T19:46:11.665Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 Not a cold-start idea. WyshList has already drawn interest and encouragement to apply from *global venture firm Antler*, built an advisory circle spanning senior leadership in major technology, an experienced CEO, and an expert in technological infrastructure in SMB enviorments.  WyshList was selected as a client, at the Nitschke Technology Commercialization Complex, of the University of Toledo Business Incubator.

@@ -16,7 +16,7 @@ experience_min: 2
 skills: TypeScript, React.js, JavaScript (ES5/ES6) / TypeScript, ReactJS
 posted_at: 2026-08-06T10:51:18.000Z
 captured_at: 2026-09-19T15:24:37.613Z
-status: new
+status: applied
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 1.00
@@ -30,6 +30,12 @@ fit_summary: You're a strong fit for this role. You have all the core technical 
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:24:48.036Z
+status_updated_at: 2026-09-19T20:15:45.256Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
+applied_at: 2026-09-19T20:15:45.256Z
 ---
 
 **Title:** Full-Stack Senior Engineer

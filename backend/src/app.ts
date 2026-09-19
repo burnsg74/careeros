@@ -3,6 +3,11 @@ import express from 'express'
 import { resolveDataDir } from './lib/dataDir.js'
 import { getContact, listContacts, updateContactBody } from './lib/contacts.js'
 import { getJobBoard, listJobBoards, updateJobBoardBody } from './lib/jobBoards.js'
+import {
+  createApplicationQuestion,
+  generateApplicationAnswer,
+  listApplicationQuestions,
+} from './lib/applicationQuestions.js'
 import { parseJobStatusPatch } from './lib/jobStatus.js'
 import { getJob, listJobs, screenInboxJobs, updateJobBody, updateJobStatus } from './lib/jobs.js'
 
@@ -12,6 +17,14 @@ function readBody(value: unknown): string | null {
   }
   const body = (value as { body?: unknown }).body
   return typeof body === 'string' ? body : null
+}
+
+function readStringField(value: unknown, key: string): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+  const field = (value as Record<string, unknown>)[key]
+  return typeof field === 'string' ? field : null
 }
 
 export const app = express()
@@ -75,6 +88,43 @@ app.patch('/api/jobs/:id/status', async (req, res) => {
     return
   }
   const result = await updateJobStatus(req.params.id, parsed.patch)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.post('/api/jobs/:id/application-answers', async (req, res) => {
+  const questionId = readStringField(req.body, 'questionId')
+  if (questionId === null) {
+    res.status(400).json({ error: 'questionId is required' })
+    return
+  }
+  const result = await generateApplicationAnswer(req.params.id, questionId)
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.get('/api/application-questions', async (_req, res) => {
+  const result = await listApplicationQuestions()
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error })
+    return
+  }
+  res.json(result.value)
+})
+
+app.post('/api/application-questions', async (req, res) => {
+  const title = readStringField(req.body, 'title')
+  if (title === null) {
+    res.status(400).json({ error: 'title is required' })
+    return
+  }
+  const result = await createApplicationQuestion(title)
   if (!result.ok) {
     res.status(result.status).json({ error: result.error })
     return

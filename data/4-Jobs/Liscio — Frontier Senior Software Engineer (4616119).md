@@ -16,8 +16,13 @@ experience_min: 8
 skills: Python, PostgreSQL, Ruby on Rails, TypeScript, Docker, AWS, GitHub Actions
 posted_at: 2026-08-27T13:10:47.000Z
 captured_at: 2026-09-19T15:14:19.952Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T18:20:41.913Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **Build the product and the machine that builds it**

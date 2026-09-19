@@ -191,6 +191,7 @@ afterEach(() => {
     status: 'new',
   }
   localStorage.clear()
+  window.history.replaceState({}, '', '/')
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
@@ -316,8 +317,104 @@ test('applies a saved job', async () => {
       }),
     )
   })
-  expect(window.open).toHaveBeenCalledWith('https://example.com/job', '_blank', 'noopener')
+  expect(window.open).not.toHaveBeenCalled()
+  expect(window.location.pathname).toBe('/jobs/1001/apply')
   expect(screen.queryByText('Acme')).not.toBeInTheDocument()
+})
+
+test('saves a job before the status API resolves', async () => {
+  let resolvePatch: (value: { ok: boolean; status: number; json: () => Promise<unknown> }) => void = () => {}
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url === '/api/jobs' && method === 'GET') {
+        return { ok: true, status: 200, json: async () => jobs }
+      }
+      if (url === '/api/jobs/1001/status' && method === 'PATCH') {
+        return await new Promise((resolve) => {
+          resolvePatch = resolve
+        })
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'Job not found' }) }
+    }),
+  )
+
+  render(Jobs, { props: { path: '/jobs' } })
+  expect(await screen.findByText('Acme')).toBeInTheDocument()
+  await fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0])
+
+  expect(screen.queryByText('Acme')).not.toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'Saved (1)' })).toBeInTheDocument()
+
+  resolvePatch({
+    ok: true,
+    status: 200,
+    json: async () => ({ ...jobDetail('1001'), status: 'saved' }),
+  })
+})
+
+test('applies a saved job before the status API resolves', async () => {
+  jobs[0] = { ...jobs[0], status: 'saved' }
+  let resolvePatch: (value: { ok: boolean; status: number; json: () => Promise<unknown> }) => void = () => {}
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url === '/api/jobs' && method === 'GET') {
+        return { ok: true, status: 200, json: async () => jobs }
+      }
+      if (url === '/api/jobs/1001/status' && method === 'PATCH') {
+        return await new Promise((resolve) => {
+          resolvePatch = resolve
+        })
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'Job not found' }) }
+    }),
+  )
+
+  render(Jobs, { props: { path: '/jobs' } })
+  expect(await screen.findByRole('tab', { name: 'Inbox (1)' })).toBeInTheDocument()
+  await fireEvent.click(screen.getByRole('tab', { name: 'Saved (1)' }))
+  await fireEvent.click(screen.getAllByRole('button', { name: 'Apply' })[0])
+
+  expect(window.open).not.toHaveBeenCalled()
+  expect(window.location.pathname).toBe('/jobs/1001/apply')
+  expect(screen.queryByText('Acme')).not.toBeInTheDocument()
+
+  resolvePatch({
+    ok: true,
+    status: 200,
+    json: async () => ({ ...jobDetail('1001'), status: 'applied' }),
+  })
+})
+
+test('shows an alert if a background status update fails', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = (init?.method ?? 'GET').toUpperCase()
+      if (url === '/api/jobs' && method === 'GET') {
+        return { ok: true, status: 200, json: async () => jobs }
+      }
+      if (url === '/api/jobs/1001/status' && method === 'PATCH') {
+        return { ok: false, status: 500, json: async () => ({}) }
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'Job not found' }) }
+    }),
+  )
+
+  render(Jobs, { props: { path: '/jobs' } })
+  expect(await screen.findByText('Acme')).toBeInTheDocument()
+  await fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0])
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Could not update status')
+  expect(screen.getByText('Acme')).toBeInTheDocument()
+  await fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
 test('opens a delete reason dialog', async () => {

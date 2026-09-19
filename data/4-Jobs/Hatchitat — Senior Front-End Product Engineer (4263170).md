@@ -16,7 +16,7 @@ experience_min: 5
 skills: Javascript, Product Management, Product Development, REST APIs, TypeScript, React.js, Next.Js
 posted_at: 2026-06-02T02:26:48.000Z
 captured_at: 2026-09-19T15:26:55.753Z
-status: new
+status: deleted
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.90
@@ -30,6 +30,11 @@ fit_summary: You are a strong fit for this contract role. Your React, TypeScript
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:27:03.412Z
+status_updated_at: 2026-09-19T17:00:51.502Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 Architect, engineer, and implement the front-end application layer for an AI-driven geospatial intelligence platform, including parcel analysis workflows, map-based interfaces, AI-assisted interactions, structured analytical outputs, and evolving product systems in close collaboration with product, design, and backend teams.

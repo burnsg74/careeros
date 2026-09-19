@@ -16,7 +16,7 @@ experience_min: 5
 skills: Node.js, Twilio, REST APIs, TypeScript, Google Cloud Platform, Postgress, Twilio API, Amazon Lex, Twilio, AWS Lambda, and Google Speech API
 posted_at: 2026-08-14T17:47:45.000Z
 captured_at: 2026-09-19T15:12:24.003Z
-status: new
+status: saved
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 1.00
@@ -30,6 +30,11 @@ fit_summary: You are a strong fit for this senior full-stack role at a prop-tech
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:12:33.557Z
+status_updated_at: 2026-09-19T18:07:15.279Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **About Us** swivl is the prop tech customer engagement platform.

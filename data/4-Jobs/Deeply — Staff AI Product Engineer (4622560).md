@@ -16,8 +16,13 @@ experience_min: 9
 skills: Node.js, React.js, Large Language Models (LLMs), Agentic AI
 posted_at: 2026-08-22T23:57:46.000Z
 captured_at: 2026-09-19T15:18:08.270Z
-status: new
+status: deleted
 fit_error: parse_failed
+status_updated_at: 2026-09-19T17:36:58.089Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 ## The role

@@ -16,7 +16,7 @@ experience_min: 0
 skills: Python, SQL, API, Next.Js
 posted_at: 2026-09-03T14:22:22.000Z
 captured_at: 2026-09-19T15:15:58.628Z
-status: new
+status: applied
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.94
@@ -30,6 +30,12 @@ fit_summary: You're a strong fit for this early-stage startup role. Your 25+ yea
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:16:11.220Z
+status_updated_at: 2026-09-19T20:32:25.811Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
+applied_at: 2026-09-19T20:32:25.811Z
 ---
 
 ## Job Description: Software Engineer (SWE)

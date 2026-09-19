@@ -16,7 +16,7 @@ experience_min: 5
 skills: Javascript, Node.js, TypeScript, React.js, Next.Js, Vercel
 posted_at: 2026-09-07T16:30:48.000Z
 captured_at: 2026-09-19T15:13:28.131Z
-status: new
+status: saved
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.92
@@ -30,6 +30,11 @@ fit_summary: You're a strong fit for this early-stage SaaS role. You have all co
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:13:40.056Z
+status_updated_at: 2026-09-19T17:59:36.512Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **About Flycore**

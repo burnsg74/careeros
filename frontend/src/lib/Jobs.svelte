@@ -16,8 +16,9 @@
     type DeleteReason,
     type JobStageFilter,
     type JobStatus,
+    type JobStatusPatch,
   } from './jobStatus'
-  import { jobDetailPath, navigate, parseJobId } from './router'
+  import { jobApplyPath, jobDetailPath, navigate, parseJobId } from './router'
   import { buildJobDetailView } from './jobDetailView'
 
   const PROPERTIES_OPEN_KEY = 'careeros.propertiesOpen'
@@ -32,7 +33,6 @@
   let saveError = $state<string | null>(null)
   let draft = $state('')
   let stage = $state<JobStageFilter>('inbox')
-  let statusSaving = $state(false)
   let statusError = $state<string | null>(null)
   let deleteOpen = $state(false)
   let deleteJobId = $state<string | null>(null)
@@ -117,12 +117,10 @@
     if (!id) {
       editing = false
       saveError = null
-      statusError = null
       return
     }
     editing = false
     saveError = null
-    statusError = null
     lastJobId = id
     untrack(() => {
       void jobsStore.ensureDetail(id)
@@ -204,20 +202,6 @@
     }
   }
 
-  function listingUrl(job: JobSummary | JobDetail): string {
-    if ('properties' in job && job.properties.url) {
-      return job.properties.url
-    }
-    return job.url
-  }
-
-  function openListing(job: JobSummary | JobDetail) {
-    const url = listingUrl(job)
-    if (url) {
-      window.open(url, '_blank', 'noopener')
-    }
-  }
-
   function stageIds(): string[] {
     return jobs.filter((job) => jobMatchesStage(job.status, stage)).map((job) => job.id)
   }
@@ -241,33 +225,22 @@
     navigate('/jobs')
   }
 
-  async function saveJob(job: JobSummary | JobDetail, fromDetail: boolean) {
-    const orderedIds = stageIds()
-    statusSaving = true
+  function patchStatusInBackground(id: string, patch: JobStatusPatch) {
     statusError = null
-    try {
-      await jobsStore.patchStatus(job.id, { status: 'saved' })
-      advanceAfter(job.id, fromDetail, orderedIds)
-    } catch {
+    void jobsStore.patchStatus(id, patch).catch(() => {
       statusError = 'Could not update status'
-    } finally {
-      statusSaving = false
-    }
+    })
   }
 
-  async function applyJob(job: JobSummary | JobDetail, fromDetail: boolean) {
+  function saveJob(job: JobSummary | JobDetail, fromDetail: boolean) {
     const orderedIds = stageIds()
-    statusSaving = true
-    statusError = null
-    try {
-      const updated = await jobsStore.patchStatus(job.id, { status: 'applied' })
-      openListing(updated)
-      advanceAfter(job.id, fromDetail, orderedIds)
-    } catch {
-      statusError = 'Could not update status'
-    } finally {
-      statusSaving = false
-    }
+    patchStatusInBackground(job.id, { status: 'saved' })
+    advanceAfter(job.id, fromDetail, orderedIds)
+  }
+
+  function applyJob(job: JobSummary | JobDetail) {
+    patchStatusInBackground(job.id, { status: 'applied' })
+    navigate(jobApplyPath(job.id))
   }
 
   function startDelete(id: string, fromDetail: boolean) {
@@ -278,56 +251,37 @@
   }
 
   function cancelDelete() {
-    if (statusSaving) {
-      return
-    }
     deleteOpen = false
     deleteJobId = null
   }
 
-  async function confirmDelete(reason: DeleteReason, other: string, missingSkills: string[]) {
+  function confirmDelete(reason: DeleteReason, other: string, missingSkills: string[]) {
     if (!deleteJobId) {
       return
     }
     const id = deleteJobId
     const fromDetail = deleteFromDetail
     const orderedIds = stageIds()
-    statusSaving = true
-    statusError = null
-    try {
-      await jobsStore.patchStatus(id, {
-        status: 'deleted',
-        deleted_reason: reason,
-        deleted_reason_other: other,
-        missing_skills: missingSkills.length > 0 ? missingSkills : undefined,
-      })
-      deleteOpen = false
-      deleteJobId = null
-      advanceAfter(id, fromDetail, orderedIds)
-    } catch {
-      statusError = 'Could not update status'
-    } finally {
-      statusSaving = false
-    }
+    patchStatusInBackground(id, {
+      status: 'deleted',
+      deleted_reason: reason,
+      deleted_reason_other: other,
+      missing_skills: missingSkills.length > 0 ? missingSkills : undefined,
+    })
+    deleteOpen = false
+    deleteJobId = null
+    advanceAfter(id, fromDetail, orderedIds)
   }
 
-  async function setStatus(id: string, status: JobStatus) {
+  function setStatus(id: string, status: JobStatus) {
     if (status === 'deleted') {
       startDelete(id, isDetail && jobId === id)
       return
     }
     const orderedIds = stageIds()
-    statusSaving = true
-    statusError = null
-    try {
-      const updated = await jobsStore.patchStatus(id, { status })
-      if (isDetail && jobId === id && !jobMatchesStage(updated.status, stage) && stage !== 'all') {
-        advanceAfter(id, true, orderedIds)
-      }
-    } catch {
-      statusError = 'Could not update status'
-    } finally {
-      statusSaving = false
+    patchStatusInBackground(id, { status })
+    if (isDetail && jobId === id && !jobMatchesStage(status, stage) && stage !== 'all') {
+      advanceAfter(id, true, orderedIds)
     }
   }
 
@@ -338,7 +292,7 @@
     if (next === current) {
       return
     }
-    void setStatus(id, next)
+    setStatus(id, next)
   }
 
   function goToPrevious() {
@@ -354,19 +308,19 @@
   }
 
   function saveCurrent() {
-    if (detail?.status === 'new' && !statusSaving) {
-      void saveJob(detail, true)
+    if (detail?.status === 'new') {
+      saveJob(detail, true)
     }
   }
 
   function applyCurrent() {
-    if (detail?.status === 'saved' && !statusSaving) {
-      void applyJob(detail, true)
+    if (detail?.status === 'saved') {
+      applyJob(detail)
     }
   }
 
   function deleteCurrent() {
-    if ((detail?.status === 'new' || detail?.status === 'saved') && !statusSaving) {
+    if (detail?.status === 'new' || detail?.status === 'saved') {
       startDelete(detail.id, true)
     }
   }
@@ -403,21 +357,21 @@
       return
     }
     if (key === 's') {
-      if (detail?.status === 'new' && !statusSaving) {
+      if (detail?.status === 'new') {
         event.preventDefault()
         saveCurrent()
       }
       return
     }
     if (key === 'a') {
-      if (detail?.status === 'saved' && !statusSaving) {
+      if (detail?.status === 'saved') {
         event.preventDefault()
         applyCurrent()
       }
       return
     }
     if (key === 'd') {
-      if ((detail?.status === 'new' || detail?.status === 'saved') && !statusSaving) {
+      if (detail?.status === 'new' || detail?.status === 'saved') {
         event.preventDefault()
         deleteCurrent()
       }
@@ -432,7 +386,7 @@
 
   function markCurrentNoReply() {
     if (detail) {
-      void setStatus(detail.id, 'no_response')
+      setStatus(detail.id, 'no_response')
     }
   }
 </script>
@@ -507,7 +461,6 @@
             <button
               type="button"
               class="text-btn primary"
-              disabled={statusSaving}
               title="Save (S)"
               aria-keyshortcuts="s"
               onclick={saveCurrent}
@@ -517,7 +470,6 @@
             <button
               type="button"
               class="text-btn"
-              disabled={statusSaving}
               title="Delete (D)"
               aria-keyshortcuts="d"
               onclick={deleteCurrent}
@@ -528,7 +480,6 @@
             <button
               type="button"
               class="text-btn primary"
-              disabled={statusSaving}
               title="Apply (A)"
               aria-keyshortcuts="a"
               onclick={applyCurrent}
@@ -538,7 +489,6 @@
             <button
               type="button"
               class="text-btn"
-              disabled={statusSaving}
               title="Delete (D)"
               aria-keyshortcuts="d"
               onclick={deleteCurrent}
@@ -550,7 +500,6 @@
               <span class="sr-only">Status</span>
               <select
                 value={detail.status}
-                disabled={statusSaving}
                 onchange={onCurrentStatusSelect}
               >
                 {#each Object.entries(STATUS_LABELS) as [value, label] (value)}
@@ -562,7 +511,6 @@
               <button
                 type="button"
                 class="text-btn"
-                disabled={statusSaving}
                 onclick={markCurrentNoReply}
               >
                 No reply?
@@ -626,8 +574,11 @@
     </div>
   </header>
 
-  {#if statusError && !deleteOpen}
-    <p class="banner error">{statusError}</p>
+  {#if statusError}
+    <div class="status-toast" role="alert">
+      <p>{statusError}</p>
+      <button type="button" class="text-btn" onclick={() => (statusError = null)}>Dismiss</button>
+    </div>
   {/if}
 
   {#if !isDetail}
@@ -712,32 +663,31 @@
                     <span class="stage-chip">{STATUS_LABELS[job.status]}</span>
                   {/if}
                   {#if job.status === 'new'}
-                    <button type="button" class="text-btn" disabled={statusSaving} onclick={() => void saveJob(job, false)}>
+                    <button type="button" class="text-btn" onclick={() => saveJob(job, false)}>
                       Save
                     </button>
-                    <button type="button" class="text-btn" disabled={statusSaving} onclick={() => startDelete(job.id, false)}>
+                    <button type="button" class="text-btn" onclick={() => startDelete(job.id, false)}>
                       Delete
                     </button>
                   {:else if job.status === 'saved'}
-                    <button type="button" class="text-btn" disabled={statusSaving} onclick={() => void applyJob(job, false)}>
+                    <button type="button" class="text-btn" onclick={() => applyJob(job)}>
                       Apply
                     </button>
-                    <button type="button" class="text-btn" disabled={statusSaving} onclick={() => startDelete(job.id, false)}>
+                    <button type="button" class="text-btn" onclick={() => startDelete(job.id, false)}>
                       Delete
                     </button>
                   {:else if job.status === 'applied' && isStaleApplied(job.status, job.applied_at)}
                     <button
                       type="button"
                       class="text-btn"
-                      disabled={statusSaving}
-                      onclick={() => void setStatus(job.id, 'no_response')}
+                      onclick={() => setStatus(job.id, 'no_response')}
                     >
                       No reply?
                     </button>
                   {:else}
                     <label class="status-select">
                       <span class="sr-only">Status</span>
-                      <select value={job.status} disabled={statusSaving} onchange={(event) => onStatusSelect(event, job.id)}>
+                      <select value={job.status} onchange={(event) => onStatusSelect(event, job.id)}>
                         {#each Object.entries(STATUS_LABELS) as [value, label] (value)}
                           <option {value}>{label}</option>
                         {/each}
@@ -853,11 +803,11 @@
 
 <DeleteJobModal
   open={deleteOpen}
-  saving={statusSaving && deleteOpen}
-  error={deleteOpen ? statusError : null}
+  saving={false}
+  error={null}
   listedSkills={deleteListedSkills}
   oncancel={cancelDelete}
-  onconfirm={(reason, other, missingSkills) => void confirmDelete(reason, other, missingSkills)}
+  onconfirm={confirmDelete}
 />
 
 <style>
@@ -968,9 +918,24 @@
     cursor: not-allowed;
   }
 
-  .banner {
+  .status-toast {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin: 0;
-    padding: 12px 20px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+  }
+
+  .status-toast p {
+    margin: 0;
   }
 
   .list-pane,
@@ -1026,7 +991,7 @@
   }
 
   .status.error,
-  .banner.error,
+  .status-toast,
   .save-error {
     color: #b91c1c;
   }

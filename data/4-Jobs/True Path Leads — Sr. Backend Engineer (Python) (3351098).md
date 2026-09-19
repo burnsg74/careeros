@@ -16,7 +16,7 @@ experience_min: 10
 skills: Python, SQL, Redis, Kafka, AWS, Clean Architecture, Clickhouse, FastAPI
 posted_at: 2026-08-28T19:27:19.000Z
 captured_at: 2026-09-19T15:19:15.354Z
-status: new
+status: deleted
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.92
@@ -30,6 +30,11 @@ fit_summary: You meet the hard-screen criteria and have strong coverage of the c
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:19:25.986Z
+status_updated_at: 2026-09-19T17:33:44.258Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 **About Us**

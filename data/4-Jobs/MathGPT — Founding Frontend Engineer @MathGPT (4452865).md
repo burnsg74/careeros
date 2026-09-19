@@ -16,7 +16,7 @@ experience_min: 1
 skills: TypeScript, React.js, React Native, Next.Js
 posted_at: 2026-07-10T20:42:17.000Z
 captured_at: 2026-09-19T15:20:09.834Z
-status: new
+status: deleted
 fit_score: 9
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.79
@@ -30,6 +30,11 @@ fit_summary: You're a strong fit for this founding frontend role. Your React and
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:20:19.288Z
+status_updated_at: 2026-09-19T17:27:31.361Z
+deleted_reason: not_interested
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 [MathGPT](https://math-gpt.org) is a personal AI tutor for every STEM student. To date, over 15 million students have used MathGPT to master STEM concepts. As part of the team, you will have the opportunity to shape how the next 100 million students learn math.

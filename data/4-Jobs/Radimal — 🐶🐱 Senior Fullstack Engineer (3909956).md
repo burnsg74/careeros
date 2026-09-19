@@ -16,7 +16,7 @@ experience_min: 5
 skills: Python, DICOM, React.js, AWS, Orthanc, LLMs
 posted_at: 2026-08-18T18:09:34.000Z
 captured_at: 2026-09-19T15:19:28.153Z
-status: new
+status: saved
 fit_score: 10
 fit_recommendation: STRONG_PASS
 fit_required_match: 0.90
@@ -30,6 +30,11 @@ fit_summary: "You're a strong fit for this role: the stack (React, Python, FastA
 fit_early_exit: false
 fit_model: claude-haiku-4-5
 fit_evaluated_at: 2026-09-19T15:19:40.023Z
+status_updated_at: 2026-09-19T17:33:05.083Z
+deleted_reason: 
+deleted_reason_other: 
+missing_skills: 
+deleted_auto: 
 ---
 
 # Senior Fullstack Engineer
