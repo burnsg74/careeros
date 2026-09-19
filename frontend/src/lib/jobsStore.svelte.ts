@@ -1,6 +1,6 @@
 import { EntityStore } from './entityStore.svelte'
 import type { JobDetail, JobSummary } from './jobs'
-import { fetchJob, fetchJobs, jobToSummary, patchJobStatus } from './jobs'
+import { fetchJob, fetchJobs, isJobDetail, jobToSummary, patchJobStatus } from './jobs'
 import type { JobStatusPatch } from './jobStatus'
 import { saveNoteBody } from './notes'
 
@@ -12,6 +12,7 @@ class JobsStore extends EntityStore<JobSummary, JobDetail> {
       fetchDetail: fetchJob,
       save: (id, body) => saveNoteBody<JobDetail>(`/api/jobs/${encodeURIComponent(id)}`, body),
       toSummary: jobToSummary,
+      isDetail: isJobDetail,
       loadError: 'Could not load jobs',
       notFoundError: 'Job not found',
       detailError: 'Could not load job',

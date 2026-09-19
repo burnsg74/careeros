@@ -31,6 +31,10 @@ export type JobDetail = JobSummary & {
   obsidianUrl: string
 }
 
+export function isJobDetail(job: JobSummary | JobDetail): job is JobDetail {
+  return 'body' in job && 'properties' in job && 'obsidianUrl' in job
+}
+
 export function jobToSummary(job: JobDetail): JobSummary {
   return {
     id: job.id,
@@ -70,8 +74,8 @@ export function formatOverallMatch(value: string | undefined): string {
   return `${Math.round(percent)}%`
 }
 
-export async function fetchJobs(): Promise<JobSummary[]> {
-  return fetchJson<JobSummary[]>('/api/jobs')
+export async function fetchJobs(): Promise<(JobSummary | JobDetail)[]> {
+  return fetchJson<(JobSummary | JobDetail)[]>('/api/jobs')
 }
 
 export async function fetchJob(id: string): Promise<JobDetail> {

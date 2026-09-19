@@ -8,10 +8,11 @@ export type EntityCache<S extends { id: string }, D extends S> = {
 
 export type EntityStoreOptions<S extends { id: string }, D extends S> = {
   key: string
-  fetchList: () => Promise<S[]>
+  fetchList: () => Promise<(S | D)[]>
   fetchDetail: (id: string) => Promise<D>
   save: (id: string, body: string) => Promise<D>
   toSummary: (detail: D) => S
+  isDetail?: (item: S | D) => item is D
   loadError: string
   notFoundError: string
   detailError: string
@@ -31,8 +32,21 @@ export class EntityStore<S extends { id: string }, D extends S> {
       initial: { list: [], details: {} },
       load: async () => {
         try {
-          const list = await opts.fetchList()
-          return { list, details: this.persist.value.details }
+          const items = await opts.fetchList()
+          const details: Record<string, D> = {}
+          const list: S[] = []
+          for (const item of items) {
+            if (opts.isDetail?.(item)) {
+              details[item.id] = item
+              list.push(opts.toSummary(item))
+            } else {
+              list.push(item)
+            }
+          }
+          return {
+            list,
+            details: Object.keys(details).length > 0 ? details : this.persist.value.details,
+          }
         } catch {
           throw new Error(opts.loadError)
         }
@@ -112,9 +126,10 @@ export class EntityStore<S extends { id: string }, D extends S> {
   }
 
   async ensureDetail(id: string) {
-    if (!this.getDetail(id)) {
-      this.detailLoading[id] = true
+    if (this.getDetail(id)) {
+      return
     }
+    this.detailLoading[id] = true
     try {
       const detail = await this.opts.fetchDetail(id)
       this.upsertDetail(detail)

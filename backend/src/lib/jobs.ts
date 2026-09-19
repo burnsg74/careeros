@@ -87,6 +87,15 @@ function toSummary(filename: string, properties: Record<string, string>): JobSum
   }
 }
 
+function toDetail(filename: string, properties: Record<string, string>, body: string): JobDetail {
+  return {
+    ...toSummary(filename, properties),
+    properties,
+    body,
+    obsidianUrl: noteObsidianUrl('4-Jobs', filename),
+  }
+}
+
 function compareJobs(a: JobSummary, b: JobSummary): number {
   if (a.captured_at !== b.captured_at) {
     return b.captured_at.localeCompare(a.captured_at)
@@ -111,7 +120,7 @@ async function readJobFile(
   }
 }
 
-export async function listJobs(): Promise<JobsResult<JobSummary[]>> {
+export async function listJobs(): Promise<JobsResult<JobDetail[]>> {
   const dir = jobsDir()
   if (!dir.ok) {
     return dir
@@ -124,13 +133,13 @@ export async function listJobs(): Promise<JobsResult<JobSummary[]>> {
     return { ok: true, value: [] }
   }
 
-  const jobs: JobSummary[] = []
+  const jobs: JobDetail[] = []
   for (const filename of filenames) {
     const note = await readJobFile(dir.value, filename)
     if (!note) {
       continue
     }
-    jobs.push(toSummary(filename, note.properties))
+    jobs.push(toDetail(filename, note.properties, note.body))
   }
 
   jobs.sort(compareJobs)
@@ -189,12 +198,7 @@ export async function getJob(id: string): Promise<JobsResult<JobDetail>> {
 
   return {
     ok: true,
-    value: {
-      ...found.value.summary,
-      properties: found.value.properties,
-      body: found.value.body,
-      obsidianUrl: noteObsidianUrl('4-Jobs', found.value.filename),
-    },
+    value: toDetail(found.value.filename, found.value.properties, found.value.body),
   }
 }
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { refreshStores, resetStores } from './bootStores'
 import { jobsStore } from './jobsStore.svelte'
-import type { JobSummary } from './jobs'
+import type { JobDetail, JobSummary } from './jobs'
 
 const jobs: JobSummary[] = [
   {
@@ -85,6 +85,32 @@ test('patchStatus updates the store before the API resolves', async () => {
 
   expect(jobsStore.list[0]?.status).toBe('applied')
   expect(jobsStore.list[0]?.applied_at).toBe('2026-09-12T13:00:00.000Z')
+})
+
+test('start caches job details from the list so ensureDetail does not refetch', async () => {
+  const detail: JobDetail = {
+    ...jobs[0],
+    properties: { status: 'new' },
+    body: 'Boot body',
+    obsidianUrl: 'obsidian://open',
+  }
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/jobs') {
+        return { ok: true, status: 200, json: async () => [detail] }
+      }
+      return { ok: false, status: 404, json: async () => ({}) }
+    }),
+  )
+
+  await jobsStore.start()
+  expect(jobsStore.getDetail('1001')?.body).toBe('Boot body')
+  expect(jobsStore.list[0]).toEqual(jobs[0])
+
+  await jobsStore.ensureDetail('1001')
+  expect(vi.mocked(fetch).mock.calls.map((call) => String(call[0]))).toEqual(['/api/jobs'])
 })
 
 test('refreshStores clears cached details then reloads lists', async () => {

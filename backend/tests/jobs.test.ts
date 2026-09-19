@@ -22,7 +22,7 @@ describe('GET /api/jobs', () => {
 
     expect(response.status).toBe(200)
     expect(response.body).toEqual([
-      {
+      expect.objectContaining({
         id: '1001',
         name: 'Senior Engineer',
         company: 'Acme',
@@ -45,8 +45,10 @@ describe('GET /api/jobs', () => {
         applied_at: '',
         deleted_reason: '',
         skills: 'TypeScript, Svelte',
-      },
-      {
+        body: expect.stringContaining('Ship the product.'),
+        obsidianUrl: `obsidian://open?vault=fixtures&file=${encodeURIComponent('4-Jobs/Acme — Senior Engineer (1001)')}`,
+      }),
+      expect.objectContaining({
         id: '1002',
         name: 'Staff Engineer',
         company: 'Beta',
@@ -68,8 +70,12 @@ describe('GET /api/jobs', () => {
         applied_at: '',
         deleted_reason: '',
         skills: 'Ruby on Rails, Python',
-      },
+        body: expect.stringContaining('Staff role at Beta.'),
+        obsidianUrl: `obsidian://open?vault=fixtures&file=${encodeURIComponent('4-Jobs/Beta — Staff Engineer (1002)')}`,
+      }),
     ])
+    expect(response.body[0].properties.source_id).toBe('1001')
+    expect(response.body[1].properties.source_id).toBe('1002')
   })
 })
 
