@@ -1,6 +1,6 @@
 import { parseSkillList } from './skills.js'
 
-export const JOB_STATUSES = ['new', 'applied', 'deleted', 'interview', 'rejected', 'no_response'] as const
+export const JOB_STATUSES = ['new', 'saved', 'applied', 'deleted', 'interview', 'rejected', 'no_response'] as const
 
 export type JobStatus = (typeof JOB_STATUSES)[number]
 

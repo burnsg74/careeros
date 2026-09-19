@@ -117,6 +117,19 @@ describe('PATCH /api/jobs/:id/status', () => {
     expect(response.body).toEqual({ error: 'status is invalid' })
   })
 
+  it('marks a job saved', async () => {
+    const dir = await copyFixtures()
+
+    const response = await request(app).patch('/api/jobs/1001/status').send({ status: 'saved' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.status).toBe('saved')
+    expect(response.body.properties.status).toBe('saved')
+
+    const raw = await readFile(join(dir, '4-Jobs', 'Acme — Senior Engineer (1001).md'), 'utf8')
+    expect(raw).toContain('status: saved')
+  })
+
   it('saves a deleted reason', async () => {
     const dir = await copyFixtures()
 

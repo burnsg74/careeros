@@ -186,6 +186,10 @@ afterEach(() => {
     applied_at: '',
     deleted_reason: '',
   }
+  jobs[1] = {
+    ...jobs[1],
+    status: 'new',
+  }
   localStorage.clear()
   vi.useRealTimers()
   vi.unstubAllGlobals()
@@ -241,6 +245,7 @@ test('renders the job list', async () => {
   expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.queryByRole('progressbar', { name: 'Inbox progress' })).not.toBeInTheDocument()
   expect(screen.getByRole('tab', { name: 'Inbox (2)' })).toHaveAttribute('aria-selected', 'true')
+  expect(screen.getByRole('tab', { name: 'Saved (0)' })).toBeInTheDocument()
   expect(screen.getByRole('tab', { name: 'Applied (1)' })).toBeInTheDocument()
   expect(screen.getByRole('tab', { name: 'All (3)' })).toBeInTheDocument()
   expect(screen.queryByText('Gamma')).not.toBeInTheDocument()
@@ -257,12 +262,50 @@ test('filters applied jobs and flags stale applications', async () => {
   expect(screen.getByRole('button', { name: 'No reply?' })).toBeInTheDocument()
 })
 
-test('applies a job from the inbox', async () => {
+test('saves a job from the inbox', async () => {
   render(Jobs, { props: { path: '/jobs' } })
 
   expect(await screen.findByText('Acme')).toBeInTheDocument()
-  const applyButtons = screen.getAllByRole('button', { name: 'Apply' })
-  await fireEvent.click(applyButtons[0])
+  const saveButtons = screen.getAllByRole('button', { name: 'Save' })
+  await fireEvent.click(saveButtons[0])
+
+  await waitFor(() => {
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+      '/api/jobs/1001/status',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'saved' }),
+      }),
+    )
+  })
+  expect(window.open).not.toHaveBeenCalled()
+  expect(screen.queryByText('Acme')).not.toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'Saved (1)' })).toBeInTheDocument()
+})
+
+test('saving the last inbox job from detail moves to saved', async () => {
+  jobs[1] = { ...jobs[1], status: 'applied' }
+  render(Jobs, { props: { path: '/jobs/1001' } })
+
+  expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
+  await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+  await waitFor(() => {
+    expect(screen.getByRole('tab', { name: 'Saved (1)' })).toHaveAttribute('aria-selected', 'true')
+  })
+  expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument()
+  expect(window.open).not.toHaveBeenCalled()
+})
+
+test('applies a saved job', async () => {
+  jobs[0] = { ...jobs[0], status: 'saved' }
+  render(Jobs, { props: { path: '/jobs' } })
+
+  expect(await screen.findByRole('tab', { name: 'Inbox (1)' })).toBeInTheDocument()
+  await fireEvent.click(screen.getByRole('tab', { name: 'Saved (1)' }))
+  expect(screen.getByText('Acme')).toBeInTheDocument()
+
+  await fireEvent.click(screen.getAllByRole('button', { name: 'Apply' })[0])
 
   await waitFor(() => {
     expect(vi.mocked(fetch)).toHaveBeenCalledWith(
@@ -373,7 +416,7 @@ test('renders job detail content and properties', async () => {
     'obsidian://open?vault=CareerOS&file=4-Jobs%2FAcme',
   )
   expect(screen.queryByRole('button', { name: 'Preview markdown' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument()
 })
 
 test('edits and saves job markdown', async () => {
@@ -438,7 +481,7 @@ test('filters the inbox by remote, match, skills, and pay', async () => {
   expect(screen.getByText('No jobs match these filters.')).toBeInTheDocument()
 })
 
-test('detail shortcuts move between jobs and apply or delete the current one', async () => {
+test('detail shortcuts move between jobs and save or delete the current one', async () => {
   const push = vi.spyOn(history, 'pushState')
   const view = render(Jobs, { props: { path: '/jobs' } })
 
@@ -449,7 +492,7 @@ test('detail shortcuts move between jobs and apply or delete the current one', a
 
   await view.rerender({ path: '/jobs/1001' })
   expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Apply' })).toHaveAttribute('aria-keyshortcuts', 'a')
+  expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('aria-keyshortcuts', 's')
   expect(screen.getByRole('button', { name: 'Delete' })).toHaveAttribute('aria-keyshortcuts', 'd')
 
   await fireEvent.keyDown(window, { key: 'n' })
@@ -467,13 +510,13 @@ test('detail shortcuts move between jobs and apply or delete the current one', a
   expect(screen.getByRole('combobox', { name: 'Reason' })).toHaveValue('not_interested')
   await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
-  await fireEvent.keyDown(window, { key: 'a' })
+  await fireEvent.keyDown(window, { key: 's' })
   await waitFor(() => {
     expect(vi.mocked(fetch)).toHaveBeenCalledWith(
       '/api/jobs/1001/status',
       expect.objectContaining({
         method: 'PATCH',
-        body: JSON.stringify({ status: 'applied' }),
+        body: JSON.stringify({ status: 'saved' }),
       }),
     )
   })

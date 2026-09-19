@@ -229,8 +229,29 @@
     const nextId = nextJobId(orderedIds, id)
     if (nextId) {
       openJob(nextId)
-    } else {
-      navigate('/jobs')
+      return
+    }
+    if (stage === 'inbox') {
+      const firstSaved = jobs.find((job) => job.status === 'saved')
+      if (firstSaved) {
+        selectStage('saved')
+        return
+      }
+    }
+    navigate('/jobs')
+  }
+
+  async function saveJob(job: JobSummary | JobDetail, fromDetail: boolean) {
+    const orderedIds = stageIds()
+    statusSaving = true
+    statusError = null
+    try {
+      await jobsStore.patchStatus(job.id, { status: 'saved' })
+      advanceAfter(job.id, fromDetail, orderedIds)
+    } catch {
+      statusError = 'Could not update status'
+    } finally {
+      statusSaving = false
     }
   }
 
@@ -332,14 +353,20 @@
     }
   }
 
-  function applyCurrent() {
+  function saveCurrent() {
     if (detail?.status === 'new' && !statusSaving) {
+      void saveJob(detail, true)
+    }
+  }
+
+  function applyCurrent() {
+    if (detail?.status === 'saved' && !statusSaving) {
       void applyJob(detail, true)
     }
   }
 
   function deleteCurrent() {
-    if (detail?.status === 'new' && !statusSaving) {
+    if ((detail?.status === 'new' || detail?.status === 'saved') && !statusSaving) {
       startDelete(detail.id, true)
     }
   }
@@ -375,15 +402,22 @@
       }
       return
     }
-    if (key === 'a') {
+    if (key === 's') {
       if (detail?.status === 'new' && !statusSaving) {
+        event.preventDefault()
+        saveCurrent()
+      }
+      return
+    }
+    if (key === 'a') {
+      if (detail?.status === 'saved' && !statusSaving) {
         event.preventDefault()
         applyCurrent()
       }
       return
     }
     if (key === 'd') {
-      if (detail?.status === 'new' && !statusSaving) {
+      if ((detail?.status === 'new' || detail?.status === 'saved') && !statusSaving) {
         event.preventDefault()
         deleteCurrent()
       }
@@ -470,6 +504,27 @@
       {#if isDetail && detail && !detailLoading && !detailError}
         <div class="job-actions">
           {#if detail.status === 'new'}
+            <button
+              type="button"
+              class="text-btn primary"
+              disabled={statusSaving}
+              title="Save (S)"
+              aria-keyshortcuts="s"
+              onclick={saveCurrent}
+            >
+              Save <kbd aria-hidden="true">S</kbd>
+            </button>
+            <button
+              type="button"
+              class="text-btn"
+              disabled={statusSaving}
+              title="Delete (D)"
+              aria-keyshortcuts="d"
+              onclick={deleteCurrent}
+            >
+              Delete <kbd aria-hidden="true">D</kbd>
+            </button>
+          {:else if detail.status === 'saved'}
             <button
               type="button"
               class="text-btn primary"
@@ -613,7 +668,7 @@
       {:else if listError}
         <p class="status error">{listError}</p>
       {:else if stage === 'inbox' && newCount === 0}
-        <p class="status">Inbox zero. Every captured job is applied or deleted.</p>
+        <p class="status">Inbox zero. Every captured job is saved or deleted.</p>
       {:else if stageJobs.length === 0}
         <p class="status">No jobs in this stage.</p>
       {:else if filteredJobs.length === 0}
@@ -657,6 +712,13 @@
                     <span class="stage-chip">{STATUS_LABELS[job.status]}</span>
                   {/if}
                   {#if job.status === 'new'}
+                    <button type="button" class="text-btn" disabled={statusSaving} onclick={() => void saveJob(job, false)}>
+                      Save
+                    </button>
+                    <button type="button" class="text-btn" disabled={statusSaving} onclick={() => startDelete(job.id, false)}>
+                      Delete
+                    </button>
+                  {:else if job.status === 'saved'}
                     <button type="button" class="text-btn" disabled={statusSaving} onclick={() => void applyJob(job, false)}>
                       Apply
                     </button>

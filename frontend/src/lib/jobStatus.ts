@@ -1,4 +1,4 @@
-export const JOB_STATUSES = ['new', 'applied', 'deleted', 'interview', 'rejected', 'no_response'] as const
+export const JOB_STATUSES = ['new', 'saved', 'applied', 'deleted', 'interview', 'rejected', 'no_response'] as const
 
 export type JobStatus = (typeof JOB_STATUSES)[number]
 
@@ -21,6 +21,7 @@ export type JobStageFilter = 'inbox' | JobStatus | 'all'
 
 export const STAGE_TABS: { id: JobStageFilter; label: string }[] = [
   { id: 'inbox', label: 'Inbox' },
+  { id: 'saved', label: 'Saved' },
   { id: 'applied', label: 'Applied' },
   { id: 'interview', label: 'Interview' },
   { id: 'rejected', label: 'Rejected' },
@@ -31,6 +32,7 @@ export const STAGE_TABS: { id: JobStageFilter; label: string }[] = [
 
 export const STATUS_LABELS: Record<JobStatus, string> = {
   new: 'New',
+  saved: 'Saved',
   applied: 'Applied',
   deleted: 'Deleted',
   interview: 'Interview',

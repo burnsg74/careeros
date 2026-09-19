@@ -32,6 +32,7 @@
   const inboxJobs = $derived(jobs.filter((job) => jobMatchesStage(job.status, 'inbox')))
   const inboxPreview = $derived(inboxJobs.slice(0, 8))
   const inboxCount = $derived(inboxJobs.length)
+  const savedCount = $derived(jobs.filter((job) => jobMatchesStage(job.status, 'saved')).length)
   const followUpCount = $derived(jobs.filter((job) => isStaleApplied(job.status, job.applied_at)).length)
   const followUpLabel = $derived(followUpCount === 1 ? 'follow-up' : 'follow-ups')
 
@@ -59,6 +60,7 @@
 
   <p class="summary">
     {inboxCount} inbox ·
+    {savedCount} saved ·
     <a href="/jobs" onclick={(event) => go(event, '/jobs')}>{followUpCount} {followUpLabel}</a>
   </p>
 
@@ -70,7 +72,7 @@
       jobsLoading,
       jobsError,
       'Loading jobs…',
-      'Inbox zero. Every captured job is applied or deleted.',
+      'Inbox zero. Every captured job is saved or deleted.',
       inboxRows,
     )}
     {@render widget(

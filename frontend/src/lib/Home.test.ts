@@ -127,7 +127,7 @@ test('shows an empty inbox when no new jobs remain', async () => {
   render(Home)
 
   await waitFor(() => {
-    expect(screen.getByText('Inbox zero. Every captured job is applied or deleted.')).toBeInTheDocument()
+    expect(screen.getByText('Inbox zero. Every captured job is saved or deleted.')).toBeInTheDocument()
   })
   expect(screen.getByText(/0 inbox/)).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: /Senior Engineer/ })).not.toBeInTheDocument()
