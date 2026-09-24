@@ -238,8 +238,23 @@
     advanceAfter(job.id, fromDetail, orderedIds)
   }
 
+  function listingUrl(job: JobSummary | JobDetail): string {
+    if ('properties' in job && job.properties.url) {
+      return job.properties.url
+    }
+    return job.url
+  }
+
+  function openListing(job: JobSummary | JobDetail) {
+    const url = listingUrl(job)
+    if (url) {
+      window.open(url, '_blank', 'noopener')
+    }
+  }
+
   function applyJob(job: JobSummary | JobDetail) {
     patchStatusInBackground(job.id, { status: 'applied' })
+    openListing(job)
     navigate(jobApplyPath(job.id))
   }
 

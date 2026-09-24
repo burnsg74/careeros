@@ -12,7 +12,7 @@ const job: JobDetail = {
   locations: 'Remote',
   remote: 'true',
   posted_at: '',
-  company_url: '',
+  company_url: 'https://wellfound.com/company/acme',
   fit_overall_match: '',
   fit_recommendation: '',
   fit_score: '',
@@ -90,6 +90,11 @@ test('shows the posting and generates an answer for a listed question', async ()
   render(ApplicationQuestions, { props: { jobId: '1001' } })
 
   expect(await screen.findByRole('heading', { name: 'Senior Engineer', level: 1 })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Acme' })).toHaveAttribute(
+    'href',
+    'https://wellfound.com/company/acme',
+  )
+  expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute('href', 'https://example.com/job')
   expect(screen.getByText('Acme builds widgets.')).toBeInTheDocument()
   expect(screen.getByText(/Ship the/)).toBeInTheDocument()
   expect(

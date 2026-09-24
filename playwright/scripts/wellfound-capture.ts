@@ -83,8 +83,6 @@ type JobListing = {
   equity?: string | null
   jobType?: string | null
   remote?: boolean | null
-  locationNames?: string[] | null
-  acceptedRemoteLocationNames?: string[] | null
   skills?: Tagged[] | null
   yearsExperienceMin?: number | null
   liveStartAt?: number | string | null
@@ -556,8 +554,6 @@ function toMarkdown(
   const companySlug = listing.startup?.slug
   const companyUrl = companySlug ? `https://wellfound.com/company/${companySlug}` : ''
   const skills = joinNames(listing.skills)
-  const locations = joinNames(listing.locationNames)
-  const remoteLocations = joinNames(listing.acceptedRemoteLocationNames)
   const lines = [
     '---',
     `note_type: Job`,
@@ -571,8 +567,6 @@ function toMarkdown(
     `equity: ${yamlScalar(listing.equity)}`,
     `job_type: ${yamlScalar(listing.jobType)}`,
     `remote: ${listing.remote == null ? '' : String(listing.remote)}`,
-    `locations: ${yamlScalar(locations)}`,
-    `remote_locations: ${yamlScalar(remoteLocations)}`,
     `experience_min: ${listing.yearsExperienceMin == null ? '' : String(listing.yearsExperienceMin)}`,
     `skills: ${yamlScalar(skills)}`,
     `posted_at: ${postedAtIso(listing.liveStartAt)}`,

@@ -317,7 +317,7 @@ test('applies a saved job', async () => {
       }),
     )
   })
-  expect(window.open).not.toHaveBeenCalled()
+  expect(window.open).toHaveBeenCalledWith('https://example.com/job', '_blank', 'noopener')
   expect(window.location.pathname).toBe('/jobs/1001/apply')
   expect(screen.queryByText('Acme')).not.toBeInTheDocument()
 })
@@ -380,7 +380,7 @@ test('applies a saved job before the status API resolves', async () => {
   await fireEvent.click(screen.getByRole('tab', { name: 'Saved (1)' }))
   await fireEvent.click(screen.getAllByRole('button', { name: 'Apply' })[0])
 
-  expect(window.open).not.toHaveBeenCalled()
+  expect(window.open).toHaveBeenCalledWith('https://example.com/job', '_blank', 'noopener')
   expect(window.location.pathname).toBe('/jobs/1001/apply')
   expect(screen.queryByText('Acme')).not.toBeInTheDocument()
 

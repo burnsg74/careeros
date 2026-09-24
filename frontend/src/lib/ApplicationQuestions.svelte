@@ -33,6 +33,8 @@
   const postingHtml = $derived(
     detail?.body ? marked.parse(detail.body, { async: false }) : '',
   )
+  const postingUrl = $derived(detail?.properties.url || detail?.url || '')
+  const companyUrl = $derived(detail?.properties.company_url || detail?.company_url || '')
 
   $effect(() => {
     const id = jobId
@@ -128,8 +130,17 @@
   <header class="toolbar">
     <button type="button" class="text-btn" onclick={backToJob}>Back</button>
     <div class="heading">
-      <p class="eyebrow">{detail?.company || 'Job'}</p>
-      <h1>{detail?.name || 'Application questions'}</h1>
+      {#if companyUrl}
+        <a class="eyebrow-link" href={companyUrl} target="_blank" rel="noreferrer">{detail?.company}</a>
+      {:else}
+        <p class="eyebrow">{detail?.company || 'Job'}</p>
+      {/if}
+      <div class="title-row">
+        <h1>{detail?.name || 'Application questions'}</h1>
+        {#if postingUrl}
+          <a class="listing-link" href={postingUrl} target="_blank" rel="noreferrer">Open listing</a>
+        {/if}
+      </div>
     </div>
   </header>
 
@@ -222,16 +233,47 @@
     border-bottom: 1px solid var(--border);
   }
 
+  .heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
   .heading h1 {
     margin: 0;
     font-size: 1.15rem;
     line-height: 1.25;
   }
 
-  .eyebrow {
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .eyebrow,
+  .eyebrow-link {
     margin: 0;
     font-size: 0.8rem;
     color: var(--text);
+  }
+
+  .eyebrow-link,
+  .listing-link {
+    color: var(--link);
+    text-decoration: none;
+  }
+
+  .eyebrow-link:hover,
+  .listing-link:hover {
+    text-decoration: underline;
+  }
+
+  .listing-link {
+    font-size: 0.85rem;
+    white-space: nowrap;
   }
 
   .split {
